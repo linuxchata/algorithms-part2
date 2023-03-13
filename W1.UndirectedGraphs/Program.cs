@@ -30,6 +30,9 @@ public class Program
         Console.WriteLine($"Path from vertex {s} to vertex {v}");
         Console.WriteLine(string.Join(" => ", path));
 
+        // Breadth-First Paths
+        var bfp = new BreadthFirstPaths(graph, s);
+
         Console.ReadKey();
     }
 }

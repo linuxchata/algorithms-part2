@@ -1,7 +1,7 @@
 ﻿namespace W1.UndirectedGraphs;
 
 /// <summary>
-/// DepthFirstPaths data structure
+/// Depth-First Paths data structure
 /// </summary>
 public sealed class DepthFirstPaths
 {

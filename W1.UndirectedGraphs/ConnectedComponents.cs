@@ -7,14 +7,14 @@ public class ConnectedComponents
 {
     private readonly bool[] _marked;
     private readonly int[] _cc;
-    private int _count;
+    private readonly int _count;
 
     public ConnectedComponents(Graph g)
     {
         _marked = new bool[g.GetSize()];
         _cc = new int[g.GetSize()];
 
-        for (int v = 0; v < g.GetSize(); v++)
+        for (var v = 0; v < g.GetSize(); v++)
         {
             if (!_marked[v])
             {
@@ -38,7 +38,7 @@ public class ConnectedComponents
     {
         _marked[v] = true;
         _cc[v] = _count;
-        foreach (int w in g.GetAdjacent(v))
+        foreach (var w in g.GetAdjacent(v))
         {
             if (!_marked[w])
             {

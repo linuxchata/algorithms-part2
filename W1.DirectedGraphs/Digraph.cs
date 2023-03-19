@@ -1,14 +1,14 @@
-﻿namespace W1.UndirectedGraphs;
+﻿namespace W1.DirectedGraphs;
 
 /// <summary>
-/// Graph data structure
+/// Digraph data structure
 /// </summary>
-public class Graph
+public class Digraph
 {
     private readonly int _v;
     private readonly List<int>[] _adjacencyList;
 
-    public Graph(int v)
+    public Digraph(int v)
     {
         _v = v;
         _adjacencyList = new List<int>[_v];
@@ -31,6 +31,5 @@ public class Graph
     public void AddEdge(int v, int w)
     {
         _adjacencyList[v].Add(w);
-        _adjacencyList[w].Add(v);
     }
 }

@@ -1,3 +1,15 @@
+/*----------------------------------------------------------------
+ *  Author:        Pylyp Lebediev
+ *  Written:       24/03/2023
+ *  Last updated:  24/03/2023
+ *
+ *  Compilation:   javac WordNet.java
+ *  Execution:     java WordNet
+ *
+ *  Shortest ancestral path
+ *
+ *----------------------------------------------------------------*/
+
 import edu.princeton.cs.algs4.Digraph;
 
 public class SAP {
@@ -37,5 +49,6 @@ public class SAP {
     }
 
     public static void main(String[] args) {
+
     }
 }

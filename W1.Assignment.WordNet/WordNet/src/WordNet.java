@@ -1,3 +1,15 @@
+/*----------------------------------------------------------------
+ *  Author:        Pylyp Lebediev
+ *  Written:       23/03/2023
+ *  Last updated:  24/03/2023
+ *
+ *  Compilation:   javac WordNet.java
+ *  Execution:     java WordNet
+ *
+ *  The WordNet digraph
+ *
+ *----------------------------------------------------------------*/
+
 import edu.princeton.cs.algs4.Bag;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Queue;
@@ -14,7 +26,7 @@ public class WordNet {
     /**
      * Constructor takes the name of the two input files
      */
-    public WordNet(String synsets, String hypernyms) {
+    public WordNet(String synsets, String hypernyms)  {
         if (synsets == null) {
             throw new IllegalArgumentException("synsets file is not specified");
         }
@@ -27,8 +39,8 @@ public class WordNet {
 
         this.count = synsetsString.length;
 
-        this.adj = (Bag<Integer>[]) new Bag[count];
-        this.nouns = new String[synsetsString.length];
+        this.adj = (Bag<Integer>[]) new Bag[this.count];
+        this.nouns = new String[this.count];
 
         for (var synset : synsetsString) {
             var result = synset.split(",");
@@ -81,22 +93,10 @@ public class WordNet {
      * Distance between nounA and nounB
      */
     public int distance(String nounA, String nounB) {
-        var result = getPaths(nounA, nounB);
-        var nounAPathToRoot = result[0];
-        var nounBPathToRoot = result[1];
-
-        for (int i = 0; i < this.count; i++) {
-            var a = nounAPathToRoot.peek();
-            var b = nounBPathToRoot.peek();
-
-            if (a.equals(b)) {
-                nounAPathToRoot.dequeue();
-                nounBPathToRoot.dequeue();
-            } else {
-                break;
-            }
-        }
-
+        var paths = getPaths(nounA, nounB);
+        getCommonAncestorId(paths);
+        var nounAPathToRoot = paths[0];
+        var nounBPathToRoot = paths[1];
         return nounAPathToRoot.size() + nounBPathToRoot.size();
     }
 
@@ -105,41 +105,25 @@ public class WordNet {
      * of nounA and nounB in a shortest ancestral path
      */
     public String sap(String nounA, String nounB) {
-        var result = getPaths(nounA, nounB);
-        var nounAPathToRoot = result[0];
-        var nounBPathToRoot = result[1];
-
-        var commonAncestorId = -1;
-        for (int i = 0; i < this.count; i++) {
-            var a = nounAPathToRoot.peek();
-            var b = nounBPathToRoot.peek();
-
-            if (a.equals(b)) {
-                commonAncestorId = a;
-                nounAPathToRoot.dequeue();
-                nounBPathToRoot.dequeue();
-            } else {
-                break;
-            }
-        }
-
+        var paths = getPaths(nounA, nounB);
+        var commonAncestorId = getCommonAncestorId(paths);
         return nouns[commonAncestorId];
     }
 
     private Queue<Integer>[] getPaths(String nounA, String nounB) {
         // Validate input
         if (nounA == null) {
-            throw new IllegalArgumentException(String.format("%s is not a noun", nounA));
+            throw new IllegalArgumentException("Noun A is not a noun");
         }
 
         if (nounB == null) {
-            throw new IllegalArgumentException(String.format("%s is not a noun", nounB));
+            throw new IllegalArgumentException("Noun B is not a noun");
         }
 
         // Get nouns identifiers
         var nounAId = -1;
         var nounBId = -1;
-        for (var i = 0; i < count; i++) {
+        for (var i = 0; i < this.count; i++) {
             var n = nouns[i];
             if (nounAId == -1 && nounA.equals(n)) {
                 nounAId = i;
@@ -172,13 +156,20 @@ public class WordNet {
         var edgeTo = new int[this.count];
         var marked = new boolean[this.count];
 
+        // Create breadth-first paths
         bspInternal(s, edgeTo, marked);
 
+        // Process path
         var resultPath = new Queue<Integer>();
         for (var i = this.root; i < this.count; i = edgeTo[i]) {
             if (marked[i]) {
                 resultPath.enqueue(i);
             } else {
+                break;
+            }
+
+            // Exist loop when target vertex is reached
+            if (i == s) {
                 break;
             }
         }
@@ -196,8 +187,8 @@ public class WordNet {
             for (var w : getAdjacent(v)) {
                 if (!marked[w]) {
                     queue.enqueue(w);
-                    marked[w] = true;
                     edgeTo[w] = v;
+                    marked[w] = true;
                 }
             }
         }
@@ -207,10 +198,38 @@ public class WordNet {
         return adj[v];
     }
 
+    private int getCommonAncestorId(Queue<Integer>[] paths) {
+        var nounAPathToRoot = paths[0];
+        var nounBPathToRoot = paths[1];
+
+        var commonAncestorId = -1;
+        for (int i = 0; i < this.count; i++) {
+            if (nounAPathToRoot.isEmpty()) {
+                break;
+            }
+            if (nounBPathToRoot.isEmpty()) {
+                break;
+            }
+
+            var a = nounAPathToRoot.peek();
+            var b = nounBPathToRoot.peek();
+
+            if (a.equals(b)) {
+                commonAncestorId = a;
+                nounAPathToRoot.dequeue();
+                nounBPathToRoot.dequeue();
+            } else {
+                break;
+            }
+        }
+
+        return commonAncestorId;
+    }
+
     public static void main(String[] args) {
-        WordNet wordnet = new WordNet("synsets100-subgraph.txt", "hypernyms100-subgraph.txt");
-        var nounA = "prolamine"; // prolamine
-        var nounB = "prolamine"; // stinker = long; collagen = short
+        WordNet wordnet = new WordNet("synsets6.txt", "hypernyms6TwoAncestors.txt");
+        var nounA = "a"; // prolamine
+        var nounB = "b"; // stinker = long; collagen = short
         StdOut.println("Noun A is " + nounA + ". Noun B is " + nounB);
         StdOut.println("Shortest ancestral path is " + wordnet.distance(nounA, nounB));
         StdOut.println("Shortest common ancestor is " + wordnet.sap(nounA, nounB));

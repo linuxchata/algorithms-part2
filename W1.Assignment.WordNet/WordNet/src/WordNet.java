@@ -18,6 +18,7 @@ import edu.princeton.cs.algs4.StdOut;
 import java.util.Arrays;
 
 public class WordNet {
+
     private final int count;
     private final Bag<Integer>[] adj;
     private final String[] nouns;
@@ -26,7 +27,7 @@ public class WordNet {
     /**
      * Constructor takes the name of the two input files
      */
-    public WordNet(String synsets, String hypernyms)  {
+    public WordNet(String synsets, String hypernyms) {
         if (synsets == null) {
             throw new IllegalArgumentException("synsets file is not specified");
         }
@@ -149,7 +150,7 @@ public class WordNet {
         var nounAPathToRoot = bsp(nounAId);
         var nounBPathToRoot = bsp(nounBId);
 
-        return new Queue[]{nounAPathToRoot, nounBPathToRoot};
+        return new Queue[] {nounAPathToRoot, nounBPathToRoot};
     }
 
     private Queue<Integer> bsp(int s) {
@@ -227,17 +228,17 @@ public class WordNet {
     }
 
     public static void main(String[] args) {
-        WordNet wordnet = new WordNet("synsets6.txt", "hypernyms6TwoAncestors.txt");
+        var wordnet = new WordNet("synsets6.txt", "hypernyms6TwoAncestors.txt");
         var nounA = "a"; // prolamine
         var nounB = "b"; // stinker = long; collagen = short
         StdOut.println("Noun A is " + nounA + ". Noun B is " + nounB);
         StdOut.println("Shortest ancestral path is " + wordnet.distance(nounA, nounB));
         StdOut.println("Shortest common ancestor is " + wordnet.sap(nounA, nounB));
 
-        Outcast outcast = new Outcast(wordnet);
+        var outcast = new Outcast(wordnet);
         for (int t = 2; t < args.length; t++) {
-            In in = new In(args[t]);
-            String[] nouns = in.readAllStrings();
+            var in = new In(args[t]);
+            var nouns = in.readAllStrings();
             StdOut.println(args[t] + ": " + outcast.outcast(nouns));
         }
     }

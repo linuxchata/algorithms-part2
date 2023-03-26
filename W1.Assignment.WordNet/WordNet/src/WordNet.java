@@ -1,12 +1,12 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       23/03/2023
- *  Last updated:  24/03/2023
+ *  Last updated:  26/03/2023
  *
  *  Compilation:   javac WordNet.java
  *  Execution:     java WordNet
  *
- *  The WordNet digraph
+ *  Immutable data type WordNet
  *
  *----------------------------------------------------------------*/
 
@@ -15,6 +15,7 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class WordNet {
@@ -22,7 +23,6 @@ public class WordNet {
     private final int count;
     private final Bag<Integer>[] adj;
     private final String[] nouns;
-    private int root = -1;
 
     /**
      * Constructor takes the name of the two input files
@@ -35,11 +35,11 @@ public class WordNet {
             throw new IllegalArgumentException("hypernyms file is not specified");
         }
 
+        // Handle synsets
         var inSynsets = new In(synsets);
         var synsetsString = inSynsets.readAllLines();
 
         this.count = synsetsString.length;
-
         this.adj = (Bag<Integer>[]) new Bag[this.count];
         this.nouns = new String[this.count];
 
@@ -50,13 +50,15 @@ public class WordNet {
             this.nouns[id] = result[1];
         }
 
+        // Handle hypernyms
         var inHypernyms = new In(hypernyms);
         var hypernymsString = inHypernyms.readAllLines();
 
+        var root = -1;
         for (var hypernym : hypernymsString) {
             var result = hypernym.split(",");
             if (result.length == 1) {
-                this.root = Integer.parseInt(result[0]);
+                root = Integer.parseInt(result[0]);
                 continue;
             }
             var v = Integer.parseInt(result[0]);
@@ -66,7 +68,7 @@ public class WordNet {
             }
         }
 
-        if (this.root == -1) {
+        if (root == -1) {
             throw new IllegalArgumentException("The input does not correspond to a rooted DAG.");
         }
     }
@@ -75,7 +77,13 @@ public class WordNet {
      * Returns all WordNet nouns
      */
     public Iterable<String> nouns() {
-        return Arrays.asList(nouns);
+        var arrayList = new ArrayList<String>();
+        for (var n : nouns) {
+            String[] split = n.split("\\s+");
+            arrayList.addAll(Arrays.asList(split));
+        }
+
+        return arrayList;
     }
 
     /**
@@ -83,7 +91,17 @@ public class WordNet {
      */
     public boolean isNoun(String word) {
         for (var n : nouns) {
-            if (n != null && n.equals(word)) {
+            if (n != null && isMatchWord(n, word)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isMatchWord(String synset, String word){
+        String[] split = synset.split("\\s+");
+        for (var s : split){
+            if (word.equals(s)){
                 return true;
             }
         }
@@ -94,11 +112,8 @@ public class WordNet {
      * Distance between nounA and nounB
      */
     public int distance(String nounA, String nounB) {
-        var paths = getPaths(nounA, nounB);
-        getCommonAncestorId(paths);
-        var nounAPathToRoot = paths[0];
-        var nounBPathToRoot = paths[1];
-        return nounAPathToRoot.size() + nounBPathToRoot.size();
+        var result = getCommonAncestorAndMinDist(nounA, nounB);
+        return result[1];
     }
 
     /**
@@ -106,12 +121,35 @@ public class WordNet {
      * of nounA and nounB in a shortest ancestral path
      */
     public String sap(String nounA, String nounB) {
-        var paths = getPaths(nounA, nounB);
-        var commonAncestorId = getCommonAncestorId(paths);
+        var result = getCommonAncestorAndMinDist(nounA, nounB);
+        var commonAncestorId = result[0];
         return nouns[commonAncestorId];
     }
 
-    private Queue<Integer>[] getPaths(String nounA, String nounB) {
+    private int[] getCommonAncestorAndMinDist(String nounA, String nounB) {
+        var ids = getNounsIdentifiers(nounA, nounB);
+
+        // Run breadth-first paths
+        var nounABsp = bsp(ids[0]);
+        var nounBBsp = bsp(ids[1]);
+
+        // Get common ancestor and shortest distance
+        var commonAncestor = -1;
+        var minDist = -1;
+        for (var i = 0; i < this.count; i++) {
+            if (nounBBsp.marked[i] && nounABsp.marked[i]) {
+                var dist = nounBBsp.distTo[i] + nounABsp.distTo[i];
+                if (minDist == -1 || dist < minDist) {
+                    minDist = dist;
+                    commonAncestor = i;
+                }
+            }
+        }
+
+        return new int[]{commonAncestor, minDist};
+    }
+
+    private int[] getNounsIdentifiers(String nounA, String nounB) {
         // Validate input
         if (nounA == null) {
             throw new IllegalArgumentException("Noun A is not a noun");
@@ -126,10 +164,10 @@ public class WordNet {
         var nounBId = -1;
         for (var i = 0; i < this.count; i++) {
             var n = nouns[i];
-            if (nounAId == -1 && nounA.equals(n)) {
+            if (nounAId == -1 && isMatchWord(n, nounA)) {
                 nounAId = i;
             }
-            if (nounBId == -1 && nounB.equals(n)) {
+            if (nounBId == -1 && isMatchWord(n, nounB)) {
                 nounBId = i;
             }
             if (nounAId != -1 && nounBId != -1) {
@@ -146,39 +184,13 @@ public class WordNet {
             throw new IllegalArgumentException(String.format("%s is not a noun", nounB));
         }
 
-        // Run Breadth-First Paths;
-        var nounAPathToRoot = bsp(nounAId);
-        var nounBPathToRoot = bsp(nounBId);
-
-        return new Queue[] {nounAPathToRoot, nounBPathToRoot};
+        return new int[]{nounAId, nounBId};
     }
 
-    private Queue<Integer> bsp(int s) {
-        var edgeTo = new int[this.count];
+    private Bsp bsp(int s) {
+        var distTo = new int[this.count];
         var marked = new boolean[this.count];
 
-        // Create breadth-first paths
-        bspInternal(s, edgeTo, marked);
-
-        // Process path
-        var resultPath = new Queue<Integer>();
-        for (var i = this.root; i < this.count; i = edgeTo[i]) {
-            if (marked[i]) {
-                resultPath.enqueue(i);
-            } else {
-                break;
-            }
-
-            // Exist loop when target vertex is reached
-            if (i == s) {
-                break;
-            }
-        }
-
-        return resultPath;
-    }
-
-    private void bspInternal(int s, int[] edgeTo, boolean[] marked) {
         var queue = new Queue<Integer>();
         queue.enqueue(s);
         marked[s] = true;
@@ -188,50 +200,36 @@ public class WordNet {
             for (var w : getAdjacent(v)) {
                 if (!marked[w]) {
                     queue.enqueue(w);
-                    edgeTo[w] = v;
+                    distTo[w] = distTo[v] + 1;
                     marked[w] = true;
                 }
             }
         }
+
+        return new Bsp(distTo, marked);
     }
 
     private Bag<Integer> getAdjacent(int v) {
         return adj[v];
     }
 
-    private int getCommonAncestorId(Queue<Integer>[] paths) {
-        var nounAPathToRoot = paths[0];
-        var nounBPathToRoot = paths[1];
+    private class Bsp {
 
-        var commonAncestorId = -1;
-        for (int i = 0; i < this.count; i++) {
-            if (nounAPathToRoot.isEmpty()) {
-                break;
-            }
-            if (nounBPathToRoot.isEmpty()) {
-                break;
-            }
+        private final int[] distTo;
+        private final boolean[] marked;
 
-            var a = nounAPathToRoot.peek();
-            var b = nounBPathToRoot.peek();
-
-            if (a.equals(b)) {
-                commonAncestorId = a;
-                nounAPathToRoot.dequeue();
-                nounBPathToRoot.dequeue();
-            } else {
-                break;
-            }
+        Bsp(int[] distTo, boolean[] marked) {
+            this.distTo = distTo;
+            this.marked = marked;
         }
-
-        return commonAncestorId;
     }
 
     public static void main(String[] args) {
-        var wordnet = new WordNet("synsets6.txt", "hypernyms6TwoAncestors.txt");
-        var nounA = "a"; // prolamine
+        var wordnet = new WordNet("synsets.txt", "hypernyms.txt");
+        var nounA = "American_persimmon"; // prolamine
         var nounB = "b"; // stinker = long; collagen = short
         StdOut.println("Noun A is " + nounA + ". Noun B is " + nounB);
+        StdOut.println("nounA is noun - " + wordnet.isNoun(nounA) + ". nounB is noun - " + wordnet.isNoun(nounB));
         StdOut.println("Shortest ancestral path is " + wordnet.distance(nounA, nounB));
         StdOut.println("Shortest common ancestor is " + wordnet.sap(nounA, nounB));
 

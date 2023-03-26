@@ -1,12 +1,12 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       24/03/2023
- *  Last updated:  25/03/2023
+ *  Last updated:  26/03/2023
  *
  *  Compilation:   javac WordNet.java
  *  Execution:     java WordNet
  *
- *  Shortest ancestral path
+ *  Immutable data type the shortest ancestral path
  *
  *----------------------------------------------------------------*/
 
@@ -16,7 +16,6 @@ import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class SAP {
 
@@ -66,13 +65,15 @@ public class SAP {
     }
 
     private int[] getCommonAncestorAndMinDist(ArrayList<Integer> v, ArrayList<Integer> w) {
+        // Run breadth-first paths
         var vBsp = bsp(v);
         var wBsp = bsp(w);
 
+        // Get common ancestor and shortest distance
         var commonAncestor = -1;
         var minDist = -1;
         for (var i = 0; i < this.G.V(); i++) {
-            if (wBsp.marked[i] && vBsp.marked[i]) { // && wBsp.edgeTo[i] > 0 && vBsp.edgeTo[i] > 0
+            if (wBsp.marked[i] && vBsp.marked[i]) {
                 var dist = wBsp.distTo[i] + vBsp.distTo[i];
                 if (minDist == -1 || dist < minDist) {
                     minDist = dist;
@@ -85,17 +86,9 @@ public class SAP {
     }
 
     private Bsp bsp(ArrayList<Integer> s) {
-        var edgeTo = new int[this.G.V()];
         var distTo = new int[this.G.V()];
         var marked = new boolean[this.G.V()];
 
-        // Create breadth-first paths
-        bspInternal(s, edgeTo, distTo, marked);
-
-        return new Bsp(edgeTo, distTo, marked);
-    }
-
-    private void bspInternal(ArrayList<Integer> s, int[] edgeTo, int[] distTo, boolean[] marked) {
         var queue = new Queue<Integer>();
         for (var si : s) {
             queue.enqueue(si);
@@ -107,12 +100,13 @@ public class SAP {
             for (var w : this.G.adj(v)) {
                 if (!marked[w]) {
                     queue.enqueue(w);
-                    edgeTo[w] = v;
                     distTo[w] = distTo[v] + 1;
                     marked[w] = true;
                 }
             }
         }
+
+        return new Bsp(distTo, marked);
     }
 
     private ArrayList<Integer> convertIterable(Iterable<Integer> vi) {
@@ -121,9 +115,7 @@ public class SAP {
         }
 
         var arrayList = new ArrayList<Integer>();
-        var iterator = vi.iterator();
-        while (iterator.hasNext()) {
-            var v = iterator.next();
+        for (Integer v : vi) {
             if (v == null || v < 0 || v > this.G.V() - 1) {
                 throw new IllegalArgumentException();
             }
@@ -143,14 +135,12 @@ public class SAP {
 
     private class Bsp {
 
-        private final int[] edgeTo;
         private final int[] distTo;
         private final boolean[] marked;
 
-        Bsp(int[] edgeTo, int[] distTo, boolean[] marked) {
-            this.edgeTo = Arrays.copyOf(edgeTo, edgeTo.length);
-            this.distTo = Arrays.copyOf(distTo, distTo.length);
-            this.marked = Arrays.copyOf(marked, marked.length);
+        Bsp(int[] distTo, boolean[] marked) {
+            this.distTo = distTo;
+            this.marked = marked;
         }
     }
 

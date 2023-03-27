@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       23/03/2023
- *  Last updated:  26/03/2023
+ *  Last updated:  27/03/2023
  *
  *  Compilation:   javac WordNet.java
  *  Execution:     java WordNet
@@ -12,15 +12,15 @@
 
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.StdOut;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WordNet {
 
     private final String[] nouns;
-    private final Digraph digraph;
+    private final Map<String, ArrayList<Integer>> nounsMap;
     private final SAP sap;
 
     /**
@@ -38,15 +38,24 @@ public class WordNet {
         var inSynsets = new In(synsets);
         var synsetsString = inSynsets.readAllLines();
 
-        var count = synsetsString.length;
-
-        this.digraph = new Digraph(count);
-        this.nouns = new String[count];
+        this.nouns = new String[synsetsString.length];
+        this.nounsMap = new HashMap<String, ArrayList<Integer>>(synsetsString.length);
 
         for (var synset : synsetsString) {
-            var result = synset.split(",");
-            var id = Integer.parseInt(result[0]);
-            this.nouns[id] = result[1];
+            var line = synset.split(",");
+            var id = Integer.parseInt(line[0]);
+            this.nouns[id] = line[1];
+            var split = line[1].split("\\s+");
+            for (var n : split) {
+                if (this.nounsMap.containsKey(n)) {
+                    var item = this.nounsMap.get(n);
+                    item.add(id);
+                } else {
+                    var ids = new ArrayList<Integer>();
+                    ids.add(id);
+                    this.nounsMap.put(n, ids);
+                }
+            }
         }
 
         // Handle hypernyms
@@ -54,6 +63,7 @@ public class WordNet {
         var hypernymsString = inHypernyms.readAllLines();
 
         var root = -1;
+        var digraph = new Digraph(synsetsString.length);
         for (var hypernym : hypernymsString) {
             var result = hypernym.split(",");
             var v = Integer.parseInt(result[0]);
@@ -71,42 +81,21 @@ public class WordNet {
             throw new IllegalArgumentException("The input does not correspond to a rooted DAG.");
         }
 
-        this.sap = new SAP(this.digraph);
+        this.sap = new SAP(digraph);
     }
 
     /**
      * Returns all WordNet nouns
      */
     public Iterable<String> nouns() {
-        var arrayList = new ArrayList<String>();
-        for (var n : nouns) {
-            String[] split = n.split("\\s+");
-            arrayList.addAll(Arrays.asList(split));
-        }
-
-        return arrayList;
+        return this.nounsMap.keySet();
     }
 
     /**
      * Is the word a WordNet noun?
      */
     public boolean isNoun(String word) {
-        for (var n : nouns) {
-            if (n != null && isMatchWord(n, word)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isMatchWord(String synset, String word) {
-        var split = synset.split("\\s+");
-        for (var s : split) {
-            if (word.equals(s)) {
-                return true;
-            }
-        }
-        return false;
+        return this.nounsMap.containsKey(word);
     }
 
     /**
@@ -139,17 +128,8 @@ public class WordNet {
         }
 
         // Get nouns identifiers
-        var nounAIds = new ArrayList<Integer>();
-        var nounBIds = new ArrayList<Integer>();
-        for (var i = 0; i < this.digraph.V(); i++) {
-            var n = nouns[i];
-            if (isMatchWord(n, nounA)) {
-                nounAIds.add(i);
-            }
-            if (isMatchWord(n, nounB)) {
-                nounBIds.add(i);
-            }
-        }
+        var nounAIds = this.nounsMap.get(nounA);
+        var nounBIds = this.nounsMap.get(nounB);
 
         // Validate nouns identifiers
         if (nounAIds.isEmpty()) {
@@ -161,15 +141,5 @@ public class WordNet {
         }
 
         return new ArrayList[]{nounAIds, nounBIds};
-    }
-
-    public static void main(String[] args) {
-        var wordnet = new WordNet("synsets100-subgraph.txt", "hypernyms100-subgraph.txt");
-        var nounA = "gamma_globulin";
-        var nounB = "thing";
-        StdOut.println("Noun A is " + nounA + ". Noun B is " + nounB);
-        StdOut.println("nounA is noun - " + wordnet.isNoun(nounA) + ". nounB is noun - " + wordnet.isNoun(nounB));
-        StdOut.println("Shortest ancestral path is " + wordnet.distance(nounA, nounB));
-        StdOut.println("Shortest common ancestor is " + wordnet.sap(nounA, nounB));
     }
 }

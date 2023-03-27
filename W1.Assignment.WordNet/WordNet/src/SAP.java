@@ -3,8 +3,8 @@
  *  Written:       24/03/2023
  *  Last updated:  26/03/2023
  *
- *  Compilation:   javac WordNet.java
- *  Execution:     java WordNet
+ *  Compilation:   javac SAP.java
+ *  Execution:     java SAP
  *
  *  Immutable data type the shortest ancestral path
  *
@@ -16,10 +16,16 @@ import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 public class SAP {
 
+    private static final byte CACHEDITEMSCOUNT = 127;
     private final Digraph G;
+    private final Map<String, Bsp> cache;
+    private final Queue<String> cacheQueue;
 
     /**
      * Constructor takes a digraph (not necessarily a DAG)
@@ -30,6 +36,9 @@ public class SAP {
         }
 
         this.G = new Digraph(G);
+
+        this.cache = new HashMap<String, Bsp>();
+        this.cacheQueue = new Queue<String>();
     }
 
     /**
@@ -69,10 +78,14 @@ public class SAP {
         var vBsp = bsp(v);
         var wBsp = bsp(w);
 
+        var paths = new HashSet<Integer>();
+        paths.addAll(vBsp.path);
+        paths.addAll(wBsp.path);
+
         // Get common ancestor and shortest distance
         var commonAncestor = -1;
         var minDist = -1;
-        for (var i = 0; i < this.G.V(); i++) {
+        for (var i : paths) {
             if (wBsp.marked[i] && vBsp.marked[i]) {
                 var dist = wBsp.distTo[i] + vBsp.distTo[i];
                 if (minDist == -1 || dist < minDist) {
@@ -86,13 +99,25 @@ public class SAP {
     }
 
     private Bsp bsp(ArrayList<Integer> s) {
-        var distTo = new int[this.G.V()];
-        var marked = new boolean[this.G.V()];
+        var key = new StringBuilder();
+        s.forEach(e -> key.append(e).append("-"));
+        var keyString = key.toString();
+
+        var bsp = this.cache.get(keyString);
+        if (bsp != null) {
+            return bsp;
+        }
+
+        var size = this.G.V();
+        var distTo = new int[size];
+        var marked = new boolean[size];
+        var path = new ArrayList<Integer>();
 
         var queue = new Queue<Integer>();
         for (var si : s) {
             queue.enqueue(si);
             marked[si] = true;
+            path.add(si);
         }
 
         while (!queue.isEmpty()) {
@@ -102,11 +127,22 @@ public class SAP {
                     queue.enqueue(w);
                     distTo[w] = distTo[v] + 1;
                     marked[w] = true;
+                    path.add(w);
                 }
             }
         }
 
-        return new Bsp(distTo, marked);
+        var bspResult = new Bsp(distTo, marked, path);
+
+        if (this.cacheQueue.size() >= CACHEDITEMSCOUNT) {
+            var keyToRemove = this.cacheQueue.dequeue();
+            this.cache.remove(keyToRemove);
+        }
+
+        this.cache.put(keyString, bspResult);
+        this.cacheQueue.enqueue(keyString);
+
+        return bspResult;
     }
 
     private ArrayList<Integer> convertIterable(Iterable<Integer> vi) {
@@ -115,7 +151,7 @@ public class SAP {
         }
 
         var arrayList = new ArrayList<Integer>();
-        for (Integer v : vi) {
+        for (var v : vi) {
             if (v == null || v < 0 || v > this.G.V() - 1) {
                 throw new IllegalArgumentException();
             }
@@ -128,6 +164,7 @@ public class SAP {
         if (v < 0 || v > this.G.V() - 1) {
             throw new IllegalArgumentException();
         }
+
         var arrayList = new ArrayList<Integer>();
         arrayList.add(v);
         return arrayList;
@@ -137,10 +174,12 @@ public class SAP {
 
         private final int[] distTo;
         private final boolean[] marked;
+        private final ArrayList<Integer> path;
 
-        Bsp(int[] distTo, boolean[] marked) {
+        Bsp(int[] distTo, boolean[] marked, ArrayList<Integer> path) {
             this.distTo = distTo;
             this.marked = marked;
+            this.path = path;
         }
     }
 
@@ -148,8 +187,8 @@ public class SAP {
         var in = new In("digraph1.txt");
         var G = new Digraph(in);
         var sap = new SAP(G);
-        int v = 2;
-        int w = 6;
+        int v = 3;
+        int w = 11;
         int length = sap.length(v, w);
         int ancestor = sap.ancestor(v, w);
         StdOut.printf("length = %d, ancestor = %d\n", length, ancestor);

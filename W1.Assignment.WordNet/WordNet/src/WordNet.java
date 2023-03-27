@@ -51,7 +51,7 @@ public class WordNet {
                     var item = this.nounsMap.get(n);
                     item.add(id);
                 } else {
-                    var ids = new ArrayList<Integer>();
+                    var ids = new ArrayList<Integer>(1);
                     ids.add(id);
                     this.nounsMap.put(n, ids);
                 }
@@ -98,6 +98,7 @@ public class WordNet {
         if (word == null) {
             throw new IllegalArgumentException("Word is null");
         }
+
         return this.nounsMap.containsKey(word);
     }
 
@@ -111,9 +112,9 @@ public class WordNet {
         if (nounB == null) {
             throw new IllegalArgumentException("Noun B is null");
         }
+
         var ids = getNounsIdentifiers(nounA, nounB);
-        var minDistance = this.sap.length(ids[0], ids[1]);
-        return minDistance;
+        return this.sap.length(ids[0], ids[1]);
     }
 
     /**
@@ -121,13 +122,19 @@ public class WordNet {
      * of nounA and nounB in a shortest ancestral path
      */
     public String sap(String nounA, String nounB) {
+        if (nounA == null) {
+            throw new IllegalArgumentException("Noun A is null");
+        }
+        if (nounB == null) {
+            throw new IllegalArgumentException("Noun B is null");
+        }
+
         var ids = getNounsIdentifiers(nounA, nounB);
         var commonAncestorId = this.sap.ancestor(ids[0], ids[1]);
         return nouns[commonAncestorId];
     }
 
     private ArrayList<Integer>[] getNounsIdentifiers(String nounA, String nounB) {
-        // Validate input
         if (nounA == null) {
             throw new IllegalArgumentException("Noun A is not a noun");
         }
@@ -136,11 +143,9 @@ public class WordNet {
             throw new IllegalArgumentException("Noun B is not a noun");
         }
 
-        // Get nouns identifiers
         var nounAIds = this.nounsMap.get(nounA);
         var nounBIds = this.nounsMap.get(nounB);
 
-        // Validate nouns identifiers
         if (nounAIds == null || nounAIds.isEmpty()) {
             throw new IllegalArgumentException(String.format("%s is not a noun (ids validation)", nounA));
         }

@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       24/03/2023
- *  Last updated:  26/03/2023
+ *  Last updated:  28/03/2023
  *
  *  Compilation:   javac SAP.java
  *  Execution:     java SAP
@@ -16,16 +16,11 @@ import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 public class SAP {
 
-    private static final byte CACHEDITEMSCOUNT = 127;
     private final Digraph G;
-    private final Map<String, Bsp> cache;
-    private final Queue<String> cacheQueue;
 
     /**
      * Constructor takes a digraph (not necessarily a DAG)
@@ -36,9 +31,6 @@ public class SAP {
         }
 
         this.G = new Digraph(G);
-
-        this.cache = new HashMap<String, Bsp>();
-        this.cacheQueue = new Queue<String>();
     }
 
     /**
@@ -99,15 +91,6 @@ public class SAP {
     }
 
     private Bsp bsp(ArrayList<Integer> s) {
-        var key = new StringBuilder();
-        s.forEach(e -> key.append(e).append("-"));
-        var keyString = key.toString();
-
-        var bsp = this.cache.get(keyString);
-        if (bsp != null) {
-            return bsp;
-        }
-
         var size = this.G.V();
         var distTo = new int[size];
         var marked = new boolean[size];
@@ -132,17 +115,7 @@ public class SAP {
             }
         }
 
-        var bspResult = new Bsp(distTo, marked, path);
-
-        if (this.cacheQueue.size() >= CACHEDITEMSCOUNT) {
-            var keyToRemove = this.cacheQueue.dequeue();
-            this.cache.remove(keyToRemove);
-        }
-
-        this.cache.put(keyString, bspResult);
-        this.cacheQueue.enqueue(keyString);
-
-        return bspResult;
+        return new Bsp(distTo, marked, path);
     }
 
     private ArrayList<Integer> convertIterable(Iterable<Integer> vi) {

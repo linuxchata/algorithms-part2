@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       23/03/2023
- *  Last updated:  27/03/2023
+ *  Last updated:  28/03/2023
  *
  *  Compilation:   javac WordNet.java
  *  Execution:     java WordNet
@@ -95,6 +95,9 @@ public class WordNet {
      * Is the word a WordNet noun?
      */
     public boolean isNoun(String word) {
+        if (word == null) {
+            throw new IllegalArgumentException("Word is null");
+        }
         return this.nounsMap.containsKey(word);
     }
 
@@ -102,6 +105,12 @@ public class WordNet {
      * Distance between nounA and nounB
      */
     public int distance(String nounA, String nounB) {
+        if (nounA == null) {
+            throw new IllegalArgumentException("Noun A is null");
+        }
+        if (nounB == null) {
+            throw new IllegalArgumentException("Noun B is null");
+        }
         var ids = getNounsIdentifiers(nounA, nounB);
         var minDistance = this.sap.length(ids[0], ids[1]);
         return minDistance;
@@ -132,11 +141,11 @@ public class WordNet {
         var nounBIds = this.nounsMap.get(nounB);
 
         // Validate nouns identifiers
-        if (nounAIds.isEmpty()) {
+        if (nounAIds == null || nounAIds.isEmpty()) {
             throw new IllegalArgumentException(String.format("%s is not a noun (ids validation)", nounA));
         }
 
-        if (nounBIds.isEmpty()) {
+        if (nounBIds == null || nounBIds.isEmpty()) {
             throw new IllegalArgumentException(String.format("%s is not a noun (ids validation)", nounB));
         }
 

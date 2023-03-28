@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33502.453
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "W2.MinimumSpanningTrees", "W2.MinimumSpanningTrees.csproj", "{6EB0A277-9EA5-4AC6-929C-D9AA35C42A76}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6EB0A277-9EA5-4AC6-929C-D9AA35C42A76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EB0A277-9EA5-4AC6-929C-D9AA35C42A76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EB0A277-9EA5-4AC6-929C-D9AA35C42A76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EB0A277-9EA5-4AC6-929C-D9AA35C42A76}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {97A118DF-F9FC-4901-A935-6FC6E4D7A21D}
+	EndGlobalSection
+EndGlobal

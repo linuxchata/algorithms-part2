@@ -6,11 +6,13 @@
 public sealed class EdgeWeightedGraph
 {
     private readonly int _v;
+    private readonly List<Edge> _allEdges;
     private readonly List<Edge>[] _adjacencyList;
 
     public EdgeWeightedGraph(int v)
     {
         _v = v;
+        _allEdges = new List<Edge>();
         _adjacencyList = new List<Edge>[_v];
         for (int i = 0; i < _v; i++)
         {
@@ -37,12 +39,19 @@ public sealed class EdgeWeightedGraph
         return _v;
     }
 
+    public List<Edge> GetEdges()
+    {
+        return _allEdges;
+    }
+
     /// <summary>
     /// Add weighted edge e to this graph
     /// </summary>
     /// <param name="e"></param>
     public void AddEdge(Edge e)
     {
+        _allEdges.Add(e);
+
         var v = e.Either();
         var w = e.Other(v);
         _adjacencyList[v].Add(e);

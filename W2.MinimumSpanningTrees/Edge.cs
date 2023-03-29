@@ -59,11 +59,11 @@ public sealed class Edge : IComparable<Edge>
             throw new InvalidOperationException();
         }
 
-        if (this.Weight() > that.Weight())
+        if (GetWeight() > that.GetWeight())
         {
             return 1;
         }
-        else if (this.Weight() > that.Weight())
+        else if (GetWeight() > that.GetWeight())
         {
             return -1;
         }
@@ -74,10 +74,10 @@ public sealed class Edge : IComparable<Edge>
     }
 
     /// <summary>
-    /// The weight
+    /// Get weight
     /// </summary>
     /// <returns></returns>
-    public double Weight()
+    public double GetWeight()
     {
         return _weight;
     }

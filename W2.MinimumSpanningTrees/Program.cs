@@ -31,6 +31,10 @@ public class Program
         var kruskalMinimumSpanningTree = new KruskalMinimumSpanningTree(edgeWeightedGraph);
         var mst = kruskalMinimumSpanningTree.GetEdges();
 
+        // Lazy prim minimum spanning tree
+        var lazyPrimMinimumSpanningTree = new LazyPrimMinimumSpanningTree(edgeWeightedGraph);
+        var mst2 = lazyPrimMinimumSpanningTree.GetEdges();
+
         Console.ReadKey();
     }
 }

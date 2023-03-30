@@ -2,7 +2,7 @@
 
 public class KruskalMinimumSpanningTree
 {
-    private Queue<Edge> mst = new Queue<Edge>();
+    private Queue<Edge> _mst = new Queue<Edge>();
 
     public KruskalMinimumSpanningTree(EdgeWeightedGraph g)
     {
@@ -13,7 +13,7 @@ public class KruskalMinimumSpanningTree
         }
 
         var uf = new UnionFindQuickFind(g.V());
-        while (priorityQueue.Count != 0 && mst.Count < g.V() - 1)
+        while (priorityQueue.Count != 0 && _mst.Count < g.V() - 1)
         {
             var edge = priorityQueue.Dequeue();
             var v = edge.Either();
@@ -21,13 +21,13 @@ public class KruskalMinimumSpanningTree
             if (!uf.IsConnected(v, w))
             {
                 uf.Union(v, w);
-                mst.Enqueue(edge);
+                _mst.Enqueue(edge);
             }
         }
     }
 
     public List<Edge> GetEdges()
     {
-        return mst.ToList();
+        return _mst.ToList();
     }
 }

@@ -13,7 +13,7 @@
 import edu.princeton.cs.algs4.Picture;
 
 public class SeamCarver {
-    private final Picture pirture;
+    private final Picture picture;
 
     /*
     Create a seam carver object based on the given picture
@@ -23,35 +23,50 @@ public class SeamCarver {
             throw new IllegalArgumentException("Picture is not specified");
         }
 
-        this.pirture = new Picture(picture);
+        this.picture = new Picture(picture);
     }
 
     /*
     Current picture
      */
     public Picture picture() {
-        return new Picture("");
+        return this.picture;
     }
 
     /*
     Width of current picture
      */
     public int width() {
-        return 0;
+        return this.picture.width();
     }
 
     /*
     Height of current picture
      */
     public int height() {
-        return 0;
+        return this.picture.height();
     }
 
     /*
     Energy of pixel at column x and row y
      */
     public double energy(int x, int y) {
-        return 0.0;
+        if (x < 0 || y < 0) {
+            throw new IllegalArgumentException();
+        }
+
+        if (x == 0 || y == 0 || x == (this.picture.width() - 1) || y == (this.picture.height() - 1)) {
+            return 1000;
+        }
+
+        var rgbNextX = this.picture.get(x + 1, y);
+        var rgbPrevX = this.picture.get(x - 1, y);
+        var rgbNextY = this.picture.get(x, y + 1);
+        var rgbPrevY = this.picture.get(x, y - 1);
+        var yieldingX = Math.pow((rgbNextX.getRed() - rgbPrevX.getRed()), 2) + Math.pow((rgbNextX.getGreen() - rgbPrevX.getGreen()), 2) + Math.pow((rgbNextX.getBlue() - rgbPrevX.getBlue()), 2);
+        var yieldingY = Math.pow((rgbNextY.getRed() - rgbPrevY.getRed()), 2) + Math.pow((rgbNextY.getGreen() - rgbPrevY.getGreen()), 2) + Math.pow((rgbNextY.getBlue() - rgbPrevY.getBlue()), 2);
+
+        return Math.sqrt(yieldingX + yieldingY);
     }
 
     /*
@@ -65,7 +80,6 @@ public class SeamCarver {
     Sequence of indices for vertical seam
      */
     public int[] findVerticalSeam() {
-
         return new int[0];
     }
 
@@ -88,5 +102,7 @@ public class SeamCarver {
     }
 
     public static void main(String[] args) {
+        var pic = new Picture("3x4.png");
+        var seamCarver = new SeamCarver(pic);
     }
 }

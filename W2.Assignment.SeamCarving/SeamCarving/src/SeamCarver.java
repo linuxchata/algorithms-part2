@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       05/04/2023
- *  Last updated:  07/04/2023
+ *  Last updated:  08/04/2023
  *
  *  Compilation:   javac SeamCarver.java
  *  Execution:     java SeamCarver
@@ -18,9 +18,7 @@ import edu.princeton.cs.algs4.Picture;
 import java.util.ArrayList;
 
 public class SeamCarver {
-    private final Picture picture;
-    private final EdgeWeightedDigraph downwardDigraph;
-    private final EdgeWeightedDigraph leftwardDigraph;
+    private Picture picture;
 
     /*
     Create a seam carver object based on the given picture
@@ -31,36 +29,13 @@ public class SeamCarver {
         }
 
         this.picture = new Picture(picture);
-
-        var count = this.picture.width() * this.picture.height();
-
-        this.downwardDigraph = new EdgeWeightedDigraph(count);
-        this.leftwardDigraph = new EdgeWeightedDigraph(count);
-
-        for (var i = 0; i < count; i++) {
-            // Downward edge-weighted digraph for vertical seaming
-            var downwardCoordinates = getDownwardCoordinates(i, this.picture.width());
-            var downwardEnergy = energy(downwardCoordinates[0], downwardCoordinates[1]);
-            var downwardVertices = getDownwardVertices(i);
-            for (var v : downwardVertices) {
-                this.downwardDigraph.addEdge(new DirectedEdge(i, v, downwardEnergy));
-            }
-
-            // Leftward edge-weighted digraph for horizontal seaming
-            var leftwardCoordinates = getLeftwardCoordinates(i, this.picture.height());
-            var leftwardEnergy = energy(leftwardCoordinates[0], leftwardCoordinates[1]);
-            var leftwardVertices = getLeftwardVertices(i);
-            for (var v : leftwardVertices) {
-                this.leftwardDigraph.addEdge(new DirectedEdge(i, v, leftwardEnergy));
-            }
-        }
     }
 
     /*
     Current picture
      */
     public Picture picture() {
-        return this.picture;
+        return new Picture(this.picture);
     }
 
     /*
@@ -81,20 +56,31 @@ public class SeamCarver {
     Energy of pixel at column x and row y
      */
     public double energy(int x, int y) {
-        if (x < 0 || y < 0) {
-            throw new IllegalArgumentException();
+        if (x < 0 ||
+                y < 0 ||
+                x > (this.picture.width() - 1) ||
+                y > (this.picture.height() - 1)) {
+            throw new IllegalArgumentException("Invalid coordinates");
         }
 
-        if (x == 0 || y == 0 || x == (this.picture.width() - 1) || y == (this.picture.height() - 1)) {
-            return 1000;
+        if (x == 0 ||
+                y == 0 ||
+                x == (this.picture.width() - 1) ||
+                y == (this.picture.height() - 1)) {
+            return 1000.0;
         }
 
         var rgbNextX = this.picture.get(x + 1, y);
         var rgbPrevX = this.picture.get(x - 1, y);
         var rgbNextY = this.picture.get(x, y + 1);
         var rgbPrevY = this.picture.get(x, y - 1);
-        var yieldingX = Math.pow((rgbNextX.getRed() - rgbPrevX.getRed()), 2) + Math.pow((rgbNextX.getGreen() - rgbPrevX.getGreen()), 2) + Math.pow((rgbNextX.getBlue() - rgbPrevX.getBlue()), 2);
-        var yieldingY = Math.pow((rgbNextY.getRed() - rgbPrevY.getRed()), 2) + Math.pow((rgbNextY.getGreen() - rgbPrevY.getGreen()), 2) + Math.pow((rgbNextY.getBlue() - rgbPrevY.getBlue()), 2);
+
+        var yieldingX = Math.pow((rgbNextX.getRed() - rgbPrevX.getRed()), 2)
+                + Math.pow((rgbNextX.getGreen() - rgbPrevX.getGreen()), 2)
+                + Math.pow((rgbNextX.getBlue() - rgbPrevX.getBlue()), 2);
+        var yieldingY = Math.pow((rgbNextY.getRed() - rgbPrevY.getRed()), 2)
+                + Math.pow((rgbNextY.getGreen() - rgbPrevY.getGreen()), 2)
+                + Math.pow((rgbNextY.getBlue() - rgbPrevY.getBlue()), 2);
 
         return Math.sqrt(yieldingX + yieldingY);
     }
@@ -107,7 +93,8 @@ public class SeamCarver {
         var anotherAxisSize = this.picture.width();
 
         // Calculate the shortest path
-        var minPath = findMinPath(this.leftwardDigraph, mainAxisSize, anotherAxisSize);
+        var leftwardDigraph = buildLeftwardDigraph();
+        var minPath = findMinPath(leftwardDigraph, mainAxisSize, anotherAxisSize);
 
         // Calculate coordinates of the shortest path
         var result = new int[anotherAxisSize];
@@ -118,7 +105,7 @@ public class SeamCarver {
             if (i < minPath.size() - 1) {
                 var coordinatesFrom = getLeftwardCoordinates(path.from(), mainAxisSize);
                 result[i] = (coordinatesFrom[yCoordinateIndex]);
-            } else if (i == minPath.size() - 1) {
+            } else if (i == minPath.size() - 1) { // Last edge
                 var coordinatesFrom = getLeftwardCoordinates(path.from(), mainAxisSize);
                 var coordinatesTo = getLeftwardCoordinates(path.to(), mainAxisSize);
                 result[i] = coordinatesFrom[yCoordinateIndex];
@@ -139,7 +126,8 @@ public class SeamCarver {
         var anotherAxisSize = this.picture.height();
 
         // Calculate the shortest path
-        var minPath = findMinPath(this.downwardDigraph, mainAxisSize, anotherAxisSize);
+        var downwardDigraph = buildDownwardDigraph();
+        var minPath = findMinPath(downwardDigraph, mainAxisSize, anotherAxisSize);
 
         // Calculate coordinates of the shortest path
         var result = new int[anotherAxisSize];
@@ -150,7 +138,7 @@ public class SeamCarver {
             if (i < minPath.size() - 1) {
                 var coordinatesFrom = getDownwardCoordinates(path.from(), mainAxisSize);
                 result[i] = (coordinatesFrom[xCoordinateIndex]);
-            } else if (i == minPath.size() - 1) {
+            } else if (i == minPath.size() - 1) { // Last edge
                 var coordinatesFrom = getDownwardCoordinates(path.from(), mainAxisSize);
                 var coordinatesTo = getDownwardCoordinates(path.to(), mainAxisSize);
                 result[i] = coordinatesFrom[xCoordinateIndex];
@@ -163,53 +151,89 @@ public class SeamCarver {
         return result;
     }
 
-    private ArrayList<DirectedEdge> findMinPath(EdgeWeightedDigraph g, int axisSize, int anotherAxisSize) {
-        // Calculate vertices for first and last axes
-        var endAxisFirstVertex = axisSize * (anotherAxisSize - 1);
-        var startAxis = new int[axisSize];
-        var endAxis = new int[axisSize];
-        for (var i = 0; i < axisSize; i++) {
-            startAxis[i] = i;
-            endAxis[i] = endAxisFirstVertex + i;
-        }
-
-        // Calculate the shortest path
-        var minDist = Double.POSITIVE_INFINITY;
-        Iterable<DirectedEdge> minPath = new ArrayList<DirectedEdge>();
-        for (var i = 0; i < axisSize; i++) {
-            var acyclicSP = new AcyclicSP(g, startAxis[i]);
-            for (var j = 0; j < axisSize; j++) {
-                var path = acyclicSP.pathTo(endAxis[j]);
-                var distTo = acyclicSP.distTo(endAxis[j]);
-                if (minDist > distTo) {
-                    minDist = distTo;
-                    minPath = path;
-                }
-            }
-        }
-
-        var minPathList = new ArrayList<DirectedEdge>();
-        minPath.forEach(minPathList::add);
-
-        return minPathList;
-    }
-
     /*
     Remove horizontal seam from current picture
      */
     public void removeHorizontalSeam(int[] seam) {
-        if (seam == null) {
-            throw new IllegalArgumentException("Seam is not specified");
+        validateSeam(seam, this.picture.width(), this.picture.height());
+
+        if (this.picture.height() - 1 == 0) {
+            return;
         }
+
+        var resizedPicture = new Picture(this.picture.width(), this.picture.height() - 1);
+        for (var col = 0; col < this.picture.width(); col++) {
+            var adjustedRow = 0;
+            for (var row = 0; row < this.picture.height() - 1; row++) {
+                if (seam[col] == row) {
+                    adjustedRow++; // Skip pixel to be removed
+                }
+                var color = this.picture.get(col, adjustedRow);
+                resizedPicture.set(col, row, color);
+                adjustedRow++;
+            }
+        }
+
+        this.picture = resizedPicture;
     }
 
     /*
     Remove vertical seam from current picture
      */
     public void removeVerticalSeam(int[] seam) {
-        if (seam == null) {
-            throw new IllegalArgumentException("Seam is not specified");
+        validateSeam(seam, this.picture.height(), this.picture.width());
+
+        if (this.picture.width() - 1 == 0) {
+            return;
         }
+
+        var resizedPicture = new Picture(this.picture.width() - 1, this.picture.height());
+        for (var row = 0; row < this.picture.height(); row++) {
+            var adjustedCol = 0;
+            for (var col = 0; col < this.picture.width() - 1; col++) {
+                if (seam[row] == col) {
+                    adjustedCol++; // Skip pixel to be removed
+                }
+                var color = this.picture.get(adjustedCol, row);
+                resizedPicture.set(col, row, color);
+                adjustedCol++;
+            }
+        }
+
+        this.picture = resizedPicture;
+    }
+
+    private EdgeWeightedDigraph buildDownwardDigraph() {
+        var count = this.picture.width() * this.picture.height();
+
+        var downwardDigraph = new EdgeWeightedDigraph(count);
+
+        for (var i = 0; i < count; i++) {
+            var downwardCoordinates = getDownwardCoordinates(i, this.picture.width());
+            var downwardEnergy = energy(downwardCoordinates[0], downwardCoordinates[1]);
+            var downwardVertices = getDownwardVertices(i);
+            for (var v : downwardVertices) {
+                downwardDigraph.addEdge(new DirectedEdge(i, v, downwardEnergy));
+            }
+        }
+
+        return downwardDigraph;
+    }
+
+    private EdgeWeightedDigraph buildLeftwardDigraph() {
+        var count = this.picture.width() * this.picture.height();
+        var leftwardDigraph = new EdgeWeightedDigraph(count);
+
+        for (var i = 0; i < count; i++) {
+            var leftwardCoordinates = getLeftwardCoordinates(i, this.picture.height());
+            var leftwardEnergy = energy(leftwardCoordinates[0], leftwardCoordinates[1]);
+            var leftwardVertices = getLeftwardVertices(i);
+            for (var v : leftwardVertices) {
+                leftwardDigraph.addEdge(new DirectedEdge(i, v, leftwardEnergy));
+            }
+        }
+
+        return leftwardDigraph;
     }
 
     private int[] getDownwardCoordinates(int v, int max) {
@@ -230,6 +254,10 @@ public class SeamCarver {
 
         if (v / width >= height - 1) { // Check for the last 'row' pixel
             return new int[0];
+        }
+
+        if (width == 1) {
+            return new int[]{v + width};
         }
 
         var d = v % width;
@@ -253,6 +281,10 @@ public class SeamCarver {
             return new int[0];
         }
 
+        if (height == 1) {
+            return new int[]{v + height};
+        }
+
         var d = v % height;
         if (d == 0) { // Handle the first 'row' pixel
             var start = v + height;
@@ -266,10 +298,66 @@ public class SeamCarver {
         }
     }
 
+    private ArrayList<DirectedEdge> findMinPath(EdgeWeightedDigraph g, int axisSize, int anotherAxisSize) {
+        // Calculate vertices for first and last axes
+        var endAxisFirstVertex = axisSize * (anotherAxisSize - 1);
+        var startAxisVertices = new int[axisSize];
+        var endAxisVertices = new int[axisSize];
+        for (var i = 0; i < axisSize; i++) {
+            startAxisVertices[i] = i;
+            endAxisVertices[i] = endAxisFirstVertex + i;
+        }
+
+        // Calculate the shortest path
+        var minDist = Double.POSITIVE_INFINITY;
+        Iterable<DirectedEdge> minPath = new ArrayList<DirectedEdge>();
+        for (var i = 0; i < axisSize; i = i + 1) {
+            var acyclicSP = new AcyclicSP(g, startAxisVertices[i]);
+            for (var j = 0; j < axisSize; j = j + 1) {
+                var path = acyclicSP.pathTo(endAxisVertices[j]);
+                var distTo = acyclicSP.distTo(endAxisVertices[j]);
+                if (minDist > distTo) {
+                    minDist = distTo;
+                    minPath = path;
+                }
+            }
+        }
+
+        var minPathList = new ArrayList<DirectedEdge>();
+        minPath.forEach(minPathList::add);
+
+        return minPathList;
+    }
+
+    private void validateSeam(int[] seam, int axisSize, int anotherAxisSize) {
+        if (seam == null) {
+            throw new IllegalArgumentException("Seam is not specified");
+        }
+        if (seam.length != axisSize) {
+            throw new IllegalArgumentException("Seam length is invalid");
+        }
+
+        var prevItem = -1;
+        for (var item : seam) {
+            if (item < 0 || item > anotherAxisSize - 1) {
+                throw new IllegalArgumentException("Seam's item is invalid");
+            }
+            if (prevItem != -1) {
+                var diff = Math.abs(item - prevItem);
+                if (diff > 1) {
+                    throw new IllegalArgumentException("Seam's step is invalid");
+                }
+            }
+            prevItem = item;
+        }
+    }
+
     public static void main(String[] args) {
-        var pic = new Picture("6x5.png");
+        var pic = new Picture("8x1.png");
         var seamCarver = new SeamCarver(pic);
-        seamCarver.findVerticalSeam();
-        seamCarver.findHorizontalSeam();
+        var vertical = seamCarver.findVerticalSeam();
+        seamCarver.removeVerticalSeam(vertical);
+        var horizontal = seamCarver.findHorizontalSeam();
+        seamCarver.removeHorizontalSeam(horizontal);
     }
 }

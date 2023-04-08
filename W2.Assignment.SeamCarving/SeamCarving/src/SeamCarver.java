@@ -70,17 +70,17 @@ public class SeamCarver {
             return 1000.0;
         }
 
-        var rgbNextX = this.picture.get(x + 1, y);
-        var rgbPrevX = this.picture.get(x - 1, y);
-        var rgbNextY = this.picture.get(x, y + 1);
-        var rgbPrevY = this.picture.get(x, y - 1);
+        var rgbNextX = this.picture.getRGB(x + 1, y);
+        var rgbPrevX = this.picture.getRGB(x - 1, y);
+        var rgbNextY = this.picture.getRGB(x, y + 1);
+        var rgbPrevY = this.picture.getRGB(x, y - 1);
 
-        var yieldingX = Math.pow((rgbNextX.getRed() - rgbPrevX.getRed()), 2)
-                + Math.pow((rgbNextX.getGreen() - rgbPrevX.getGreen()), 2)
-                + Math.pow((rgbNextX.getBlue() - rgbPrevX.getBlue()), 2);
-        var yieldingY = Math.pow((rgbNextY.getRed() - rgbPrevY.getRed()), 2)
-                + Math.pow((rgbNextY.getGreen() - rgbPrevY.getGreen()), 2)
-                + Math.pow((rgbNextY.getBlue() - rgbPrevY.getBlue()), 2);
+        var yieldingX = Math.pow((getRed(rgbNextX) - getRed(rgbPrevX)), 2)
+                + Math.pow((getGreen(rgbNextX) - getGreen(rgbPrevX)), 2)
+                + Math.pow((getBlue(rgbNextX) - getBlue(rgbPrevX)), 2);
+        var yieldingY = Math.pow((getRed(rgbNextY) - getRed(rgbPrevY)), 2)
+                + Math.pow((getGreen(rgbNextY) - getGreen(rgbPrevY)), 2)
+                + Math.pow((getBlue(rgbNextY) - getBlue(rgbPrevY)), 2);
 
         return Math.sqrt(yieldingX + yieldingY);
     }
@@ -203,13 +203,28 @@ public class SeamCarver {
         this.picture = resizedPicture;
     }
 
+    private int getRed(int rgb) {
+        return (rgb >> 16) & 0xFF;
+    }
+
+    private int getGreen(int rgb) {
+        return (rgb >> 8) & 0xFF;
+    }
+
+    private int getBlue(int rgb) {
+        return (rgb >> 0) & 0xFF;
+    }
+
     private EdgeWeightedDigraph buildDownwardDigraph() {
-        var count = this.picture.width() * this.picture.height();
+        var width = this.picture.width();
+        var height = this.picture.height();
+
+        var count = width * height;
 
         var downwardDigraph = new EdgeWeightedDigraph(count);
 
         for (var i = 0; i < count; i++) {
-            var downwardCoordinates = getDownwardCoordinates(i, this.picture.width());
+            var downwardCoordinates = getDownwardCoordinates(i, width);
             var downwardEnergy = energy(downwardCoordinates[0], downwardCoordinates[1]);
             var downwardVertices = getDownwardVertices(i);
             for (var v : downwardVertices) {
@@ -221,11 +236,14 @@ public class SeamCarver {
     }
 
     private EdgeWeightedDigraph buildLeftwardDigraph() {
-        var count = this.picture.width() * this.picture.height();
+        var width = this.picture.width();
+        var height = this.picture.height();
+
+        var count = width * height;
         var leftwardDigraph = new EdgeWeightedDigraph(count);
 
         for (var i = 0; i < count; i++) {
-            var leftwardCoordinates = getLeftwardCoordinates(i, this.picture.height());
+            var leftwardCoordinates = getLeftwardCoordinates(i, height);
             var leftwardEnergy = energy(leftwardCoordinates[0], leftwardCoordinates[1]);
             var leftwardVertices = getLeftwardVertices(i);
             for (var v : leftwardVertices) {
@@ -236,15 +254,15 @@ public class SeamCarver {
         return leftwardDigraph;
     }
 
-    private int[] getDownwardCoordinates(int v, int max) {
-        var x = v % max;
-        var y = v / max;
+    private int[] getDownwardCoordinates(int v, int axisSize) {
+        var x = v % axisSize;
+        var y = v / axisSize;
         return new int[]{x, y};
     }
 
-    private int[] getLeftwardCoordinates(int v, int max) {
-        var x = v / max;
-        var y = v % max;
+    private int[] getLeftwardCoordinates(int v, int axisSize) {
+        var x = v / axisSize;
+        var y = v % axisSize;
         return new int[]{x, y};
     }
 
@@ -311,14 +329,13 @@ public class SeamCarver {
         // Calculate the shortest path
         var minDist = Double.POSITIVE_INFINITY;
         Iterable<DirectedEdge> minPath = new ArrayList<DirectedEdge>();
-        for (var i = 0; i < axisSize; i = i + 1) {
+        for (var i = 0; i < axisSize; i = i + 2) { // Each second vertex is skipped for performance optimizations
             var acyclicSP = new AcyclicSP(g, startAxisVertices[i]);
-            for (var j = 0; j < axisSize; j = j + 1) {
-                var path = acyclicSP.pathTo(endAxisVertices[j]);
+            for (var j = 0; j < axisSize; j = j + 2) { // Each second vertex is skipped for performance optimizations
                 var distTo = acyclicSP.distTo(endAxisVertices[j]);
                 if (minDist > distTo) {
                     minDist = distTo;
-                    minPath = path;
+                    minPath = acyclicSP.pathTo(endAxisVertices[j]);
                 }
             }
         }
@@ -353,7 +370,7 @@ public class SeamCarver {
     }
 
     public static void main(String[] args) {
-        var pic = new Picture("8x1.png");
+        var pic = new Picture("6x5.png");
         var seamCarver = new SeamCarver(pic);
         var vertical = seamCarver.findVerticalSeam();
         seamCarver.removeVerticalSeam(vertical);

@@ -155,21 +155,24 @@ public class SeamCarver {
     Remove horizontal seam from current picture
      */
     public void removeHorizontalSeam(int[] seam) {
-        validateSeam(seam, this.picture.width(), this.picture.height());
+        var width = this.picture.width();
+        var height = this.picture.height();
 
-        if (this.picture.height() - 1 == 0) {
+        validateSeam(seam, width, height);
+
+        if (height - 1 == 0) {
             return;
         }
 
-        var resizedPicture = new Picture(this.picture.width(), this.picture.height() - 1);
-        for (var col = 0; col < this.picture.width(); col++) {
+        var resizedPicture = new Picture(width, height - 1);
+        for (var col = 0; col < width; col++) {
             var adjustedRow = 0;
-            for (var row = 0; row < this.picture.height() - 1; row++) {
+            for (var row = 0; row < height - 1; row++) {
                 if (seam[col] == row) {
                     adjustedRow++; // Skip pixel to be removed
                 }
-                var color = this.picture.get(col, adjustedRow);
-                resizedPicture.set(col, row, color);
+                var rgb = this.picture.getRGB(col, adjustedRow);
+                resizedPicture.setRGB(col, row, rgb);
                 adjustedRow++;
             }
         }
@@ -181,21 +184,24 @@ public class SeamCarver {
     Remove vertical seam from current picture
      */
     public void removeVerticalSeam(int[] seam) {
-        validateSeam(seam, this.picture.height(), this.picture.width());
+        var width = this.picture.width();
+        var height = this.picture.height();
 
-        if (this.picture.width() - 1 == 0) {
+        validateSeam(seam, height, width);
+
+        if (width - 1 == 0) {
             return;
         }
 
-        var resizedPicture = new Picture(this.picture.width() - 1, this.picture.height());
-        for (var row = 0; row < this.picture.height(); row++) {
+        var resizedPicture = new Picture(width - 1, height);
+        for (var row = 0; row < height; row++) {
             var adjustedCol = 0;
-            for (var col = 0; col < this.picture.width() - 1; col++) {
+            for (var col = 0; col < width - 1; col++) {
                 if (seam[row] == col) {
                     adjustedCol++; // Skip pixel to be removed
                 }
-                var color = this.picture.get(adjustedCol, row);
-                resizedPicture.set(col, row, color);
+                var rgb = this.picture.getRGB(adjustedCol, row);
+                resizedPicture.setRGB(col, row, rgb);
                 adjustedCol++;
             }
         }

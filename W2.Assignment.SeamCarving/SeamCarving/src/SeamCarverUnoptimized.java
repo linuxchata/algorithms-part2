@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       05/04/2023
- *  Last updated:  09/04/2023
+ *  Last updated:  08/04/2023
  *
  *  Compilation:   javac SeamCarver.java
  *  Execution:     java SeamCarver
@@ -10,12 +10,14 @@
  *
  *----------------------------------------------------------------*/
 
+import edu.princeton.cs.algs4.AcyclicSP;
 import edu.princeton.cs.algs4.DirectedEdge;
 import edu.princeton.cs.algs4.EdgeWeightedDigraph;
 import edu.princeton.cs.algs4.Picture;
-import edu.princeton.cs.algs4.Topological;
 
-public class SeamCarver {
+import java.util.ArrayList;
+
+public class SeamCarverUnoptimized {
     private int width;
     private int height;
     private int[][] pictureColors;
@@ -23,7 +25,7 @@ public class SeamCarver {
     /*
     Create a seam carver object based on the given picture
      */
-    public SeamCarver(Picture picture) {
+    public SeamCarverUnoptimized(Picture picture) {
         if (picture == null) {
             throw new IllegalArgumentException("Picture is not specified");
         }
@@ -263,10 +265,6 @@ public class SeamCarver {
         return leftwardDigraph;
     }
 
-    private Topological getTopological(EdgeWeightedDigraph d) {
-        return new Topological(d);
-    }
-
     private int[] getDownwardCoordinates(int v, int axisSize) {
         var x = v % axisSize;
         var y = v / axisSize;
@@ -324,38 +322,31 @@ public class SeamCarver {
     }
 
     private Iterable<DirectedEdge> findMinPath(EdgeWeightedDigraph g, int axisSize, int anotherAxisSize) {
-        // Calculate vertices to check for the first and last axes
+        // Calculate vertices for first and last axes
         var endAxisFirstVertex = axisSize * (anotherAxisSize - 1);
-        var verticesToCheckCount = axisSize / 3 + (axisSize % 3 != 0 ? 1 : 0); // Check every third pixel
-        var startAxisVertices = new int[verticesToCheckCount];
-        var endAxisVertices = new int[verticesToCheckCount];
-        var vi = 0;
-        for (var v = 0; v < axisSize; v = v + 3) {
-            startAxisVertices[vi] = v;
-            endAxisVertices[vi] = endAxisFirstVertex + v;
-            vi++;
+        var startAxisVertices = new int[axisSize];
+        var endAxisVertices = new int[axisSize];
+        for (var i = 0; i < axisSize; i++) {
+            startAxisVertices[i] = i;
+            endAxisVertices[i] = endAxisFirstVertex + i;
         }
 
         // Calculate the shortest path
-        var topological = getTopological(g);
         var minDist = Double.POSITIVE_INFINITY;
-        var minPathIIndex = -1;
-        var minPathJIndex = -1;
+        Iterable<DirectedEdge> minPath = new ArrayList<DirectedEdge>();
 
-        for (var i = 0; i < verticesToCheckCount; i++) {
-            var acyclicShortestPath = new AcyclicShortestPath(g, topological, startAxisVertices[i]);
-            for (var j = 0; j < verticesToCheckCount; j++) {
-                var distTo = acyclicShortestPath.distTo(endAxisVertices[j]);
+        for (var i = 0; i < axisSize; i = i + 2) { // Each second vertex is skipped for performance optimizations
+            var acyclicSP = new AcyclicSP(g, startAxisVertices[i]);
+            for (var j = 0; j < axisSize; j = j + 2) { // Each second vertex is skipped for performance optimizations
+                var distTo = acyclicSP.distTo(endAxisVertices[j]);
                 if (minDist > distTo) {
                     minDist = distTo;
-                    minPathIIndex = i;
-                    minPathJIndex = j;
+                    minPath = acyclicSP.pathTo(endAxisVertices[j]);
                 }
             }
         }
 
-        var acyclicShortestPath = new AcyclicShortestPath(g, topological, startAxisVertices[minPathIIndex]);
-        return acyclicShortestPath.pathTo(endAxisVertices[minPathJIndex]);
+        return minPath;
     }
 
     private void validateSeam(int[] seam, int axisSize, int anotherAxisSize) {
@@ -379,7 +370,7 @@ public class SeamCarver {
     }
 
     public static void main(String[] args) {
-        var pic = new Picture("1x8.png");
+        var pic = new Picture("6x5.png");
         var seamCarver = new SeamCarver(pic);
         var vertical = seamCarver.findVerticalSeam();
         seamCarver.removeVerticalSeam(vertical);

@@ -61,7 +61,7 @@ public class PrintSeams {
     }
 
     public static void main(String[] args) {
-        Picture picture = new Picture("6x5.png");
+        Picture picture = new Picture("10x10.png");
         StdOut.println();
         StdOut.println("The table gives the dual-gradient energies of each pixel.");
         StdOut.println("The asterisks denote a minimum energy vertical or horizontal seam.");

@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       05/04/2023
- *  Last updated:  09/04/2023
+ *  Last updated:  10/04/2023
  *
  *  Compilation:   javac SeamCarver.java
  *  Execution:     java SeamCarver
@@ -23,6 +23,7 @@ public class SeamCarver {
     private int width;
     private int height;
     private int[][] pictureColors;
+    private double[][] energy;
     private boolean isTransposed;
 
     /*
@@ -36,10 +37,16 @@ public class SeamCarver {
         this.width = picture.width();
         this.height = picture.height();
         this.pictureColors = new int[this.height][this.width]; // Only picture colors are stored for optimization
-
         for (var col = 0; col < this.width; col++) {
             for (var row = 0; row < this.height; row++) {
                 this.pictureColors[row][col] = picture.getRGB(col, row);
+            }
+        }
+
+        this.energy = new double[this.height][this.width];
+        for (var col = 0; col < this.width; col++) {
+            for (var row = 0; row < this.height; row++) {
+                this.energy[row][col] = getEnergyInternal(col, row);
             }
         }
 
@@ -94,7 +101,14 @@ public class SeamCarver {
             transpose();
         }
 
-        return energyInternal(x, y);
+        if (x < 0 ||
+                y < 0 ||
+                x > (this.width - 1) ||
+                y > (this.height - 1)) {
+            throw new IllegalArgumentException("Invalid coordinates");
+        }
+
+        return energy[y][x];
     }
 
     /*
@@ -141,14 +155,7 @@ public class SeamCarver {
         removeSeam(seam);
     }
 
-    private double energyInternal(int x, int y) {
-        if (x < 0 ||
-                y < 0 ||
-                x > (this.width - 1) ||
-                y > (this.height - 1)) {
-            throw new IllegalArgumentException("Invalid coordinates");
-        }
-
+    private double getEnergyInternal(int x, int y) {
         if (x == 0 ||
                 y == 0 ||
                 x == (this.width - 1) ||
@@ -188,17 +195,20 @@ public class SeamCarver {
     }
 
     private void transpose() {
-        var transposed = new int[this.width][this.height];
+        var transposedPictureColors = new int[this.width][this.height];
+        var transposedEnergy = new double[this.width][this.height];
         for (var i = 0; i < this.height; i++) {
             for (var j = 0; j < this.width; j++) {
-                transposed[j][i] = this.pictureColors[i][j];
+                transposedPictureColors[j][i] = this.pictureColors[i][j];
+                transposedEnergy[j][i] = this.energy[i][j];
             }
         }
 
         var temp = this.height;
         this.height = this.width;
         this.width = temp;
-        this.pictureColors = transposed;
+        this.pictureColors = transposedPictureColors;
+        this.energy = transposedEnergy;
         this.isTransposed = !this.isTransposed;
     }
 
@@ -216,18 +226,18 @@ public class SeamCarver {
 
     private EdgeWeightedDigraph buildDigraph() {
         var count = this.width * this.height;
-        var downwardDigraph = new EdgeWeightedDigraph(count);
+        var digraph = new EdgeWeightedDigraph(count);
 
         for (var i = 0; i < count; i++) {
             var coordinates = getCoordinates(i, this.width);
-            var energy = energyInternal(coordinates[0], coordinates[1]);
+            var energyValue = this.energy[coordinates[1]][coordinates[0]];
             var vertices = getVertices(i);
             for (var v : vertices) {
-                downwardDigraph.addEdge(new DirectedEdge(i, v, energy));
+                digraph.addEdge(new DirectedEdge(i, v, energyValue));
             }
         }
 
-        return downwardDigraph;
+        return digraph;
     }
 
     private int[] getCoordinates(int v, int axisSize) {
@@ -264,6 +274,7 @@ public class SeamCarver {
         var verticesToCheckCount = axisSize / 3 + (axisSize % 3 != 0 ? 1 : 0); // Check every third pixel
         var startAxisVertices = new int[verticesToCheckCount];
         var endAxisVertices = new int[verticesToCheckCount];
+
         var vi = 0;
         for (var v = 0; v < axisSize; v = v + 3) {
             startAxisVertices[vi] = v;
@@ -321,17 +332,21 @@ public class SeamCarver {
     private void removeSeam(int[] seam) {
         validateSeam(seam, this.height, this.width);
 
+        var oldWidth = this.width;
         var newWidth = this.width - 1;
 
         if (newWidth == 0) {
             return;
         }
 
+        // Copy picture's pixels to a new array
         var resizedPicture = new int[this.height][newWidth];
         for (var row = 0; row < this.height; row++) {
             for (var col = 0; col < this.width; col++) {
                 if (seam[row] == col) {
+                    // First part of the array - before the seam
                     System.arraycopy(this.pictureColors[row], 0, resizedPicture[row], 0, col);
+                    // Second part of the array - after the seam
                     System.arraycopy(this.pictureColors[row], col + 1, resizedPicture[row], col, newWidth - col);
                     break;
                 }
@@ -340,6 +355,34 @@ public class SeamCarver {
 
         this.pictureColors = resizedPicture;
         this.width = newWidth;
+
+        // Copy energies to a new array
+        var lastRow = this.height - 1;
+        var resizedEnergy = new double[this.height][newWidth];
+        for (int row = 0; row < this.height; row++) {
+            if (row == 0 || row == lastRow) {
+                System.arraycopy(this.energy[row], 0, resizedEnergy[row], 0, newWidth);
+                continue;
+            }
+            for (var col = 0; col < oldWidth; col++) {
+                if (seam[row] == col) {
+                    // First part of the array - before the seam
+                    System.arraycopy(this.energy[row], 0, resizedEnergy[row], 0, Math.max(col - 1, 0));
+                    var col1 = Math.max(col - 1, 0); // Pixel before removed pixel in a resized array; handle the first column with max
+                    resizedEnergy[row][col1] = getEnergyInternal(col1, row);
+
+                    if (col != newWidth) { // Nothing to copy when the last column is removed
+                        // Second part of the array - after the seam
+                        System.arraycopy(this.energy[row], col + 2, resizedEnergy[row], col + 1, newWidth - col - 1);
+                        var col2 = Math.min(col, newWidth - 1); // Pixel after removed pixel in a resized array; handle the last column with min
+                        resizedEnergy[row][col2] = getEnergyInternal(col2, row);
+                    }
+                    break;
+                }
+            }
+        }
+
+        this.energy = resizedEnergy;
     }
 
     private void validateSeam(int[] seam, int axisSize, int anotherAxisSize) {

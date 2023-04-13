@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       12/04/2023
- *  Last updated:  16/04/2023
+ *  Last updated:  13/04/2023
  *
  *  Compilation:   javac BaseballElimination.java
  *  Execution:     java BaseballElimination
@@ -23,7 +23,7 @@ public class BaseballElimination {
     private static final int TEAM_NAME_INDEX = 0;
     private static final int WINS_INDEX = 1;
     private static final int LOSSES_INDEX = 2;
-    private static final int LOST_GAMES_INDEX = 3;
+    private static final int LEFT_GAMES_INDEX = 3;
     private final String[] teams;
     private final int[] wins;
     private final int[] losses;
@@ -36,10 +36,10 @@ public class BaseballElimination {
     public BaseballElimination(String filename) {
         validateString(filename);
 
-        var data = new In(filename);
-        var dataString = data.readAllLines();
+        var fileData = new In(filename);
+        var fileLines = fileData.readAllLines();
 
-        var count = Integer.parseInt(dataString[0]);
+        var count = Integer.parseInt(fileLines[0]);
 
         this.teams = new String[count];
         this.wins = new int[count];
@@ -48,14 +48,14 @@ public class BaseballElimination {
         this.games = new int[count][count];
 
         var k = 0;
-        for (var i = 1; i < dataString.length; i++) {
-            var line = dataString[i];
+        for (var i = 1; i < fileLines.length; i++) {
+            var line = fileLines[i];
             if (line != null) {
                 var split = line.trim().split("\\s+"); // Split line by spaces
                 this.teams[k] = split[TEAM_NAME_INDEX].trim();
                 this.wins[k] = Integer.parseInt(split[WINS_INDEX].trim());
                 this.losses[k] = Integer.parseInt(split[LOSSES_INDEX].trim());
-                this.leftGames[k] = Integer.parseInt(split[LOST_GAMES_INDEX].trim());
+                this.leftGames[k] = Integer.parseInt(split[LEFT_GAMES_INDEX].trim());
                 for (var j = 0; j < count; j++) {
                     this.games[k][j] = Integer.parseInt(split[j + 4].trim());
                 }
@@ -120,6 +120,7 @@ public class BaseballElimination {
      */
     public boolean isEliminated(String team) {
         var subset = getSubset(team);
+
         return !subset.isEmpty();
     }
 
@@ -128,6 +129,7 @@ public class BaseballElimination {
      */
     public Iterable<String> certificateOfElimination(String team) {
         var subset = getSubset(team);
+
         return subset.isEmpty() ? null : subset;
     }
 
@@ -155,6 +157,16 @@ public class BaseballElimination {
         var targetTeamMaxPossibleWins = this.wins[targetTeamIndex] + this.leftGames[targetTeamIndex];
 
         // Trivial elimination
+        var subset = getTrivialElimination(count, targetTeamIndex, targetTeamMaxPossibleWins);
+        if (subset != null && !subset.isEmpty()) {
+            return subset;
+        }
+
+        // Nontrivial elimination
+        return getNontrivialElimination(count, targetTeamIndex, targetTeamMaxPossibleWins);
+    }
+
+    private ArrayList<String> getTrivialElimination(int count, int targetTeamIndex, int targetTeamMaxPossibleWins) {
         for (var x = 0; x < count; x++) {
             if (targetTeamIndex == x) {
                 continue;
@@ -166,24 +178,10 @@ public class BaseballElimination {
             }
         }
 
-        // Nontrivial elimination
-        var fordFulkerson = getFordFulkerson(count, targetTeamIndex, targetTeamMaxPossibleWins);
-
-        var numberOfGames = count * count;
-        var subset = new ArrayList<String>();
-        for (var x = 0; x < count; x++) {
-            if (x != targetTeamIndex) {
-                var teamVertex = numberOfGames + 1 + x;
-                if (fordFulkerson.inCut(teamVertex)) {
-                    subset.add(this.teams[x]);
-                }
-            }
-        }
-
-        return subset;
+        return null;
     }
 
-    private FordFulkerson getFordFulkerson(int count, int targetTeamIndex, int targetTeamMaxPossibleWins) {
+    private ArrayList<String> getNontrivialElimination(int count, int targetTeamIndex, int targetTeamMaxPossibleWins) {
         var numberOfGames = count * count;
         var numberOfVertices = 2 + numberOfGames + count; // 2 are vertices s and t plus number of games plus number of teams
         var flowNetwork = new FlowNetwork(numberOfVertices);
@@ -219,7 +217,19 @@ public class BaseballElimination {
             }
         }
 
-        return new FordFulkerson(flowNetwork, s, t);
+        var fordFulkerson = new FordFulkerson(flowNetwork, s, t);
+
+        var subset = new ArrayList<String>();
+        for (var x = 0; x < count; x++) {
+            if (x != targetTeamIndex) {
+                var teamVertex = numberOfGames + 1 + x;
+                if (fordFulkerson.inCut(teamVertex)) {
+                    subset.add(this.teams[x]);
+                }
+            }
+        }
+
+        return subset;
     }
 
     private int getVertexFromCoordinate(int i, int j, int width) {

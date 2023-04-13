@@ -195,12 +195,12 @@ public class BaseballElimination {
                     continue;
                 }
 
-                // Edge from vertex s to game vertex
+                // Edge from the vertex s to the game vertex
                 var gameVertex = getVertexFromCoordinate(i, j, count);
                 var gamesLeft = this.games[i][j];
                 flowNetwork.addEdge(new FlowEdge(s, gameVertex, gamesLeft));
 
-                // Edge from game vertex to team vertices
+                // Edges from the game vertex to the team vertices
                 var teamVertex1 = numberOfGames + 1 + i;
                 var teamVertex2 = numberOfGames + 1 + j;
                 flowNetwork.addEdge(new FlowEdge(gameVertex, teamVertex1, Double.POSITIVE_INFINITY));
@@ -211,6 +211,7 @@ public class BaseballElimination {
         var t = numberOfVertices - 1;
         for (var x = 0; x < count; x++) {
             if (x != targetTeamIndex) {
+                // Edge from team vertex to the vertex t
                 var teamVertex = numberOfGames + 1 + x;
                 var teamWins = Math.max(targetTeamMaxPossibleWins - this.wins[x], 0);
                 flowNetwork.addEdge(new FlowEdge(teamVertex, t, teamWins));

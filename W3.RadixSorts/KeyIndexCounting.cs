@@ -1,5 +1,8 @@
 ﻿namespace W3.RadixSorts;
 
+/// <summary>
+/// Key-indexed counting
+/// </summary>
 public sealed class KeyIndexCounting
 {
     private List<char> _charSet;
@@ -16,10 +19,10 @@ public sealed class KeyIndexCounting
     public void Sort(char[] a)
     {
         // 'd', 'a', 'c', 'f', 'f', 'b', 'd', 'b', 'f', 'b', 'e', 'a'
-        var r = _charSet.Count; // 6
+        var radix = _charSet.Count; // 6
         var n = a.Length; // 12
         var aux = new char[a.Length];
-        var count = new int[r + 1];
+        var count = new int[radix + 1];
 
         // Count frequencies of each letter using key as index
         for (var i = 0; i < n; i++)
@@ -30,8 +33,8 @@ public sealed class KeyIndexCounting
 
         // count is 0 2 3 1 2 1 3; offset by 1
 
-        // Compute frequency cumulates which specify destinations.
-        for (var ri = 0; ri < r; ri++)
+        // Compute frequency cumulates which specify destinations
+        for (var ri = 0; ri < radix; ri++)
         {
             count[ri + 1] += count[ri];
         }

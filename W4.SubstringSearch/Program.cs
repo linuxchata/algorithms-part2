@@ -12,6 +12,13 @@ public class Program
         var bruteForceSubstringSearchBackup = new BruteForceSubstringSearchBackup();
         var index2 = bruteForceSubstringSearchBackup.Search("ABACADABRAC", "ABRA");
 
+        // Knuth–Morris–Pratt substring search
+        var knuthMorrisPrattSubstringSearch = new KnuthMorrisPrattSubstringSearch();
+        var index3 = knuthMorrisPrattSubstringSearch.Search("AABACAABABACAA", "ABABAC");
+
+        var boyerMooreSubstringSearch = new BoyerMooreSubstringSearch();
+        var index4 = boyerMooreSubstringSearch.Search("FINDINAHAYSTACKNEEDLEINA", "NEEDLE");
+
         Console.ReadKey();
     }
 }

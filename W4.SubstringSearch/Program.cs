@@ -16,8 +16,13 @@ public class Program
         var knuthMorrisPrattSubstringSearch = new KnuthMorrisPrattSubstringSearch();
         var index3 = knuthMorrisPrattSubstringSearch.Search("AABACAABABACAA", "ABABAC");
 
+        // Boyer-Moore substring search
         var boyerMooreSubstringSearch = new BoyerMooreSubstringSearch();
         var index4 = boyerMooreSubstringSearch.Search("FINDINAHAYSTACKNEEDLEINA", "NEEDLE");
+
+        // Rabin–Karp substring search
+        var rabinKarpSubstringSearch = new RabinKarpSubstringSearch();
+        var index5 = rabinKarpSubstringSearch.Search("", "");
 
         Console.ReadKey();
     }

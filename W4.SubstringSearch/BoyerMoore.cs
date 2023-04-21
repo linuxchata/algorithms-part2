@@ -5,7 +5,7 @@
 /// </summary>
 public sealed class BoyerMooreSubstringSearch
 {
-    private const short Radix = 26; // Only A, B and C characters in the text string and pattern
+    private const short Radix = 26; // Only English alphabet characters in the text string and pattern
 
     private readonly List<char> _charSet;
 
@@ -57,7 +57,8 @@ public sealed class BoyerMooreSubstringSearch
 
     private int GetCharIndex(string @string, int i)
     {
-        var index = _charSet.IndexOf(@string[i]);
+        var c = @string[i];
+        var index = _charSet.IndexOf(c);
         return index;
     }
 }

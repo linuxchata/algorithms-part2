@@ -23,7 +23,8 @@ public sealed class DepthFirstPaths
     {
         _edgeTo[v] = v;
         _marked[v] = true;
-        foreach (int w in g.GetAdjacent(v))
+        var adj = g.GetAdjacent(v);
+        foreach (int w in adj)
         {
             if (!_marked[w])
             {

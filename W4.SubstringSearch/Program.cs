@@ -21,8 +21,8 @@ public class Program
         var index4 = boyerMooreSubstringSearch.Search("FINDINAHAYSTACKNEEDLEINA", "NEEDLE");
 
         // Rabin–Karp substring search
-        var rabinKarpSubstringSearch = new RabinKarpSubstringSearch();
-        var index5 = rabinKarpSubstringSearch.Search("", "");
+        var rabinKarpSubstringSearch = new RabinKarpSubstringSearch("26535");
+        var index5 = rabinKarpSubstringSearch.Search("3141592653589793");
 
         Console.ReadKey();
     }

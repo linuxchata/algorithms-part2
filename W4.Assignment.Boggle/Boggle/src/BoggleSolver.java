@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class BoggleSolver {
@@ -116,12 +115,12 @@ public class BoggleSolver {
      */
     private void dfs(int item, int size) {
         var marked = new boolean[size];
-        var path = new LinkedList<Integer>();
+        var path = new ArrayList<Integer>(size);
         path.add(item);
         dfsInternal(item, marked, path);
     }
 
-    private void dfsInternal(int v, boolean[] marked, LinkedList<Integer> path) {
+    private void dfsInternal(int v, boolean[] marked, ArrayList<Integer> path) {
         marked[v] = true;
         for (var w : getAdjacent(v)) {
             if (!marked[w]) {
@@ -129,12 +128,12 @@ public class BoggleSolver {
                 if (!doesPrefixExist(path)) {
                     // When the current path corresponds to a string that is not a prefix of
                     // any word in the dictionary, there is no need to expand the path further
-                    path.removeLast();
+                    path.remove(w);
                     marked[w] = false;
                     continue;
                 }
                 dfsInternal(w, marked, path);
-                path.removeLast();
+                path.remove(w);
                 marked[w] = false;
             }
         }
@@ -173,8 +172,8 @@ public class BoggleSolver {
         return result;
     }
 
-    private boolean doesPrefixExist(LinkedList<Integer> queue) {
-        var prefix = getPrefix(queue);
+    private boolean doesPrefixExist(ArrayList<Integer> path) {
+        var prefix = getPrefix(path);
         var doesPrefixExist = this.dictionaryTrie.containsKeysWithPrefix(prefix);
         if (doesPrefixExist && this.dictionaryTrie.contains(prefix)) {
             this.words.add(prefix);
@@ -183,11 +182,11 @@ public class BoggleSolver {
         return doesPrefixExist;
     }
 
-    private String getPrefix(LinkedList<Integer> queue) {
+    private String getPrefix(ArrayList<Integer> path) {
         var stringBuilder = new StringBuilder();
-        for (var item : queue) {
+        for (var item : path) {
             var letter = this.board[item];
-            stringBuilder.append(letter == 'Q' ? "QU" : letter); // 'Q' is representing the two-letter sequence "Qu"
+            stringBuilder.append(letter != 'Q' ? letter : "QU"); // 'Q' is representing the two-letter sequence "Qu"
         }
 
         return stringBuilder.toString();

@@ -77,12 +77,16 @@ public class BoggleSolver {
             throw new IllegalArgumentException();
         }
 
-        var points = 0;
         var length = word.length();
-        if (length < 3) {
-            throw new IllegalArgumentException();
+
+        if (length > 0 && !this.dictionaryTrie.contains(word)) {
+            return 0;
         }
-        if (length == 3 || length == 4) {
+
+        int points;
+        if (length < 3) {
+            points = 0;
+        } else if (length == 3 || length == 4) {
             points = 1;
         } else if (length == 5) {
             points = 2;

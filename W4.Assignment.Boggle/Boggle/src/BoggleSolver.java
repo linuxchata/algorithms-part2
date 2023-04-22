@@ -19,14 +19,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.TreeSet;
 
 public class BoggleSolver {
-    private final TreeSet<String> dictionaryTrie = new TreeSet<String>();
+    private final Trie dictionaryTrie = new Trie();
     private int width;
     private int height;
     private BoggleBoard boggleBoard;
-    private Map<String, ArrayList<Integer>> adjacentCache;
+    private Map<Integer, ArrayList<Integer>> adjacentCache;
+    private Map<Integer, int[]> coordinatesCache;
     private HashSet<String> words;
 
     /*
@@ -54,7 +54,8 @@ public class BoggleSolver {
         }
 
         this.boggleBoard = board;
-        this.adjacentCache = new HashMap<String, ArrayList<Integer>>();
+        this.adjacentCache = new HashMap<Integer, ArrayList<Integer>>();
+        this.coordinatesCache = new HashMap<Integer, int[]>();
         this.words = new HashSet<String>();
 
         this.width = board.cols();
@@ -101,6 +102,10 @@ public class BoggleSolver {
         return points;
     }
 
+    /*
+    Method based on depth-first search to enumerate all strings that can be composed
+    by following sequences of adjacent dice
+     */
     private void dfs(int item, int size) {
         var marked = new boolean[size];
         var path = new LinkedList<Integer>();
@@ -110,12 +115,13 @@ public class BoggleSolver {
 
     private void dfsInternal(int v, boolean[] marked, LinkedList<Integer> path) {
         marked[v] = true;
-        var coordinates = toCoordinates(v);
-        var adj = getAdjacent(coordinates[0], coordinates[1]);
+        var adj = getAdjacent(v);
         for (var w : adj) {
             if (!marked[w]) {
                 path.add(w);
                 if (!doesPrefixExist(path)) {
+                    // When the current path corresponds to a string that is not a prefix of
+                    // any word in the dictionary, there is no need to expand the path further
                     path.removeLast();
                     marked[w] = false;
                     continue;
@@ -127,11 +133,15 @@ public class BoggleSolver {
         }
     }
 
-    private ArrayList<Integer> getAdjacent(int r, int c) {
-        var key = String.format(r + " " + c);
-        if (this.adjacentCache.containsKey(key)) {
-            return this.adjacentCache.get(key);
+    private ArrayList<Integer> getAdjacent(int w) {
+        var value = this.adjacentCache.get(w);
+        if (value != null) {
+            return value;
         }
+
+        var coordinates = toCoordinates(w);
+        var r = coordinates[0];
+        var c = coordinates[1];
 
         var result = new ArrayList<Integer>();
         var maxH = Math.min(2, this.height);
@@ -151,14 +161,14 @@ public class BoggleSolver {
             }
         }
 
-        this.adjacentCache.put(key, result);
+        this.adjacentCache.put(w, result);
 
         return result;
     }
 
     private boolean doesPrefixExist(LinkedList<Integer> queue) {
         var prefix = getPrefix(queue);
-        var doesPrefixExist = !this.dictionaryTrie.subSet(prefix, prefix + "yyy").isEmpty(); // No English word has 3 consecutive "yyy"'s in it
+        var doesPrefixExist = this.dictionaryTrie.containsKeysWithPrefix(prefix);
         if (doesPrefixExist && this.dictionaryTrie.contains(prefix)) {
             this.words.add(prefix);
         }
@@ -181,10 +191,18 @@ public class BoggleSolver {
         return r * this.width + c;
     }
 
-    private int[] toCoordinates(int value) {
+    private int[] toCoordinates(int v) {
+        var value = this.coordinatesCache.get(v);
+        if (value != null) {
+            return value;
+        }
+
         var result = new int[2];
-        result[0] = value / width; // Row
-        result[1] = value % width; // Column
+        result[0] = v / width; // Row
+        result[1] = v % width; // Column
+
+        this.coordinatesCache.put(v, result);
+
         return result;
     }
 

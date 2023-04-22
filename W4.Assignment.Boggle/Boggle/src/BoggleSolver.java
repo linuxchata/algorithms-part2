@@ -87,7 +87,7 @@ public class BoggleSolver {
 
         var length = word.length();
 
-        if (length > 0 && !this.dictionaryTrie.contains(word)) {
+        if (length > 0 && !this.dictionaryTrie.contains(new StringBuilder(word))) {
             return 0;
         }
 
@@ -173,23 +173,20 @@ public class BoggleSolver {
     }
 
     private boolean doesPrefixExist(ArrayList<Integer> path) {
-        var prefix = getPrefix(path);
+        // Get prefix
+        var prefix = new StringBuilder();
+        for (var item : path) {
+            var letter = this.board[item];
+            prefix.append(letter != 'Q' ? letter : "QU"); // 'Q' is representing the two-letter sequence "Qu"
+        }
+
+        // Look for prefix in dictionary
         var doesPrefixExist = this.dictionaryTrie.containsKeysWithPrefix(prefix);
         if (doesPrefixExist && this.dictionaryTrie.contains(prefix)) {
-            this.words.add(prefix);
+            this.words.add(prefix.toString());
         }
 
         return doesPrefixExist;
-    }
-
-    private String getPrefix(ArrayList<Integer> path) {
-        var stringBuilder = new StringBuilder();
-        for (var item : path) {
-            var letter = this.board[item];
-            stringBuilder.append(letter != 'Q' ? letter : "QU"); // 'Q' is representing the two-letter sequence "Qu"
-        }
-
-        return stringBuilder.toString();
     }
 
     private int fromCoordinates(int r, int c) {

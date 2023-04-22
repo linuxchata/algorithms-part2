@@ -1,5 +1,3 @@
-import edu.princeton.cs.algs4.Queue;
-
 public class Trie {
     private static final int R = 26;
     private static final int CHARS_SHIFT = 65;
@@ -11,7 +9,7 @@ public class Trie {
         private boolean isString;
     }
 
-    public boolean contains(String key) {
+    public boolean contains(StringBuilder key) {
         if (key == null) {
             throw new IllegalArgumentException("argument to contains() is null");
         }
@@ -24,7 +22,7 @@ public class Trie {
         return x.isString;
     }
 
-    private Trie.Node get(Trie.Node x, String key, int d) {
+    private Trie.Node get(Trie.Node x, StringBuilder key, int d) {
         if (x == null) {
             return null;
         }
@@ -59,8 +57,7 @@ public class Trie {
         return x;
     }
 
-    public boolean containsKeysWithPrefix(String prefix) {
-        var x = get(root, prefix, 0);
-        return x != null;
+    public boolean containsKeysWithPrefix(StringBuilder prefix) {
+        return get(root, prefix, 0) != null;
     }
 }

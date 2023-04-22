@@ -3,7 +3,6 @@ import edu.princeton.cs.algs4.Queue;
 public class Trie {
     private static final int R = 26;
     private static final int CHARS_SHIFT = 65;
-    private static final int MAX_SIZE = R + CHARS_SHIFT;
     private Trie.Node root; // Root of trie
 
     // R-way trie node
@@ -34,8 +33,7 @@ public class Trie {
             return x;
         }
 
-        var c = key.charAt(d) - CHARS_SHIFT;
-        return get(x.next[c], key, d + 1);
+        return get(x.next[(key.charAt(d) - CHARS_SHIFT)], key, d + 1);
     }
 
     public void add(String key) {
@@ -62,29 +60,7 @@ public class Trie {
     }
 
     public boolean containsKeysWithPrefix(String prefix) {
-        var results = new Queue<String>();
         var x = get(root, prefix, 0);
-        collect(x, new StringBuilder(prefix), results);
-        return !results.isEmpty();
-    }
-
-    private void collect(Trie.Node x, StringBuilder prefix, Queue<String> results) {
-        if (x == null) {
-            return;
-        }
-
-        if (x.isString) {
-            results.enqueue(prefix.toString());
-            return;
-        }
-
-        for (char c = CHARS_SHIFT; c < MAX_SIZE; c++) {
-            prefix.append(c);
-            collect(x.next[c - CHARS_SHIFT], prefix, results);
-            if (!results.isEmpty()) {
-                return;
-            }
-            prefix.deleteCharAt(prefix.length() - 1);
-        }
+        return x != null;
     }
 }

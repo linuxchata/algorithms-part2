@@ -66,8 +66,8 @@ public class BoggleSolver {
             }
         }
 
-        this.adjacentCache = new HashMap<Integer, ArrayList<Integer>>();
-        this.coordinatesCache = new HashMap<Integer, int[]>();
+        this.adjacentCache = new HashMap<Integer, ArrayList<Integer>>(size);
+        this.coordinatesCache = new HashMap<Integer, int[]>(size);
         this.words = new HashSet<String>();
 
         for (var i = 0; i < size; i++) {

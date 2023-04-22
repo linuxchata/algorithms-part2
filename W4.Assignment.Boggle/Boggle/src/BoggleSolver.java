@@ -24,7 +24,7 @@ public class BoggleSolver {
     private final Trie dictionaryTrie = new Trie();
     private int width;
     private int height;
-    private BoggleBoard boggleBoard;
+    private char[] board;
     private Map<Integer, ArrayList<Integer>> adjacentCache;
     private Map<Integer, int[]> coordinatesCache;
     private HashSet<String> words;
@@ -53,15 +53,23 @@ public class BoggleSolver {
             throw new IllegalArgumentException();
         }
 
-        this.boggleBoard = board;
-        this.adjacentCache = new HashMap<Integer, ArrayList<Integer>>();
-        this.coordinatesCache = new HashMap<Integer, int[]>();
-        this.words = new HashSet<String>();
-
         this.width = board.cols();
         this.height = board.rows();
 
         var size = this.width * this.height;
+
+        this.board = new char[size];
+        var k = 0;
+        for (var r = 0; r < this.height; r++) {
+            for (var c = 0; c < this.width; c++) {
+                this.board[k++] = board.getLetter(r, c);
+            }
+        }
+
+        this.adjacentCache = new HashMap<Integer, ArrayList<Integer>>();
+        this.coordinatesCache = new HashMap<Integer, int[]>();
+        this.words = new HashSet<String>();
+
         for (var i = 0; i < size; i++) {
             dfs(i, size);
         }
@@ -115,8 +123,7 @@ public class BoggleSolver {
 
     private void dfsInternal(int v, boolean[] marked, LinkedList<Integer> path) {
         marked[v] = true;
-        var adj = getAdjacent(v);
-        for (var w : adj) {
+        for (var w : getAdjacent(v)) {
             if (!marked[w]) {
                 path.add(w);
                 if (!doesPrefixExist(path)) {
@@ -179,8 +186,7 @@ public class BoggleSolver {
     private String getPrefix(LinkedList<Integer> queue) {
         var stringBuilder = new StringBuilder();
         for (var item : queue) {
-            var coordinates = toCoordinates(item);
-            var letter = this.boggleBoard.getLetter(coordinates[0], coordinates[1]);
+            var letter = this.board[item];
             stringBuilder.append(letter == 'Q' ? "QU" : letter); // 'Q' is representing the two-letter sequence "Qu"
         }
 

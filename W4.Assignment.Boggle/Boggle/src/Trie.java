@@ -2,6 +2,8 @@ import edu.princeton.cs.algs4.Queue;
 
 public class Trie {
     private static final int R = 26;
+    private static final int CHARS_SHIFT = 65;
+    private static final int MAX_SIZE = R + CHARS_SHIFT;
     private Trie.Node root; // Root of trie
 
     // R-way trie node
@@ -32,7 +34,7 @@ public class Trie {
             return x;
         }
 
-        var c = key.charAt(d) - 65;
+        var c = key.charAt(d) - CHARS_SHIFT;
         return get(x.next[c], key, d + 1);
     }
 
@@ -52,7 +54,7 @@ public class Trie {
         if (d == key.length()) {
             x.isString = true;
         } else {
-            var c = key.charAt(d) - 65;
+            var c = key.charAt(d) - CHARS_SHIFT;
             x.next[c] = add(x.next[c], key, d + 1);
         }
 
@@ -76,9 +78,9 @@ public class Trie {
             return;
         }
 
-        for (char c = 65; c < R + 65; c++) {
+        for (char c = CHARS_SHIFT; c < MAX_SIZE; c++) {
             prefix.append(c);
-            collect(x.next[c - 65], prefix, results);
+            collect(x.next[c - CHARS_SHIFT], prefix, results);
             if (!results.isEmpty()) {
                 return;
             }

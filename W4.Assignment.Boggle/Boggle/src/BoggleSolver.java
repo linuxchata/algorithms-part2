@@ -12,21 +12,22 @@
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
-import edu.princeton.cs.algs4.TrieSET;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.TreeSet;
 
 public class BoggleSolver {
+    private final TreeSet<String> dictionaryTrie = new TreeSet<String>();
     private int width;
     private int height;
-    private Map<String, ArrayList<Integer>> adjacentCache = new HashMap<String, ArrayList<Integer>>();
-    private KnuthMorrisPratt knuthMorrisPratt = new KnuthMorrisPratt();
-    private TrieSET dictionaryTrie = new TrieSET();
+    private BoggleBoard boggleBoard;
+    private Map<String, ArrayList<Integer>> adjacentCache;
+    private HashSet<String> words;
 
     /*
     Initializes the data structure using the given array of strings as the dictionary.
@@ -37,10 +38,8 @@ public class BoggleSolver {
             throw new IllegalArgumentException();
         }
 
-        var dictionarySet = new HashSet<String>();
         for (var word : dictionary) {
             if (word.length() > 2) {
-                dictionarySet.add(word);
                 this.dictionaryTrie.add(word);
             }
         }
@@ -54,12 +53,19 @@ public class BoggleSolver {
             throw new IllegalArgumentException();
         }
 
+        this.boggleBoard = board;
+        this.adjacentCache = new HashMap<String, ArrayList<Integer>>();
+        this.words = new HashSet<String>();
+
         this.width = board.cols();
         this.height = board.rows();
 
-        dfs();
+        var size = this.width * this.height;
+        for (var i = 0; i < size; i++) {
+            dfs(i, size);
+        }
 
-        return new ArrayList<String>();
+        return this.words;
     }
 
     /*
@@ -67,49 +73,70 @@ public class BoggleSolver {
     (You can assume the word contains only the uppercase letters A through Z.)
      */
     public int scoreOf(String word) {
-        if (word == null || word.length() == 0) {
+        if (word == null) {
             throw new IllegalArgumentException();
         }
 
-        return -1;
+        var points = 0;
+        var length = word.length();
+        if (length < 3) {
+            throw new IllegalArgumentException();
+        }
+        if (length == 3 || length == 4) {
+            points = 1;
+        } else if (length == 5) {
+            points = 2;
+        } else if (length == 6) {
+            points = 3;
+        } else if (length == 7) {
+            points = 5;
+        } else {
+            points = 11;
+        }
+
+        return points;
     }
 
-    private void dfs() {
-        var size = this.width * this.height;
-        var edge = new int[size];
-        Arrays.fill(edge, -1);
+    private void dfs(int item, int size) {
         var marked = new boolean[size];
-        var queue = new LinkedList<Integer>();
-        queue.add(0);
-        dfsInternal(0, edge, marked);
+        var path = new LinkedList<Integer>();
+        path.add(item);
+        dfsInternal(item, marked, path);
     }
 
-    private void dfsInternal(int v, int[] edge, boolean[] marked) {
-        edge[v] = v;
+    private void dfsInternal(int v, boolean[] marked, LinkedList<Integer> path) {
         marked[v] = true;
         var coordinates = toCoordinates(v);
         var adj = getAdjacent(coordinates[0], coordinates[1]);
         for (var w : adj) {
             if (!marked[w]) {
-                dfsInternal(w, edge, marked);
-                edge[w] = v;
+                path.add(w);
+                if (!doesPrefixExist(path)) {
+                    path.removeLast();
+                    marked[w] = false;
+                    continue;
+                }
+                dfsInternal(w, marked, path);
+                path.removeLast();
                 marked[w] = false;
             }
         }
     }
 
     private ArrayList<Integer> getAdjacent(int r, int c) {
-        var key = r + " " + c;
-        if (adjacentCache.containsKey(key)) {
-            return adjacentCache.get(key);
+        var key = String.format(r + " " + c);
+        if (this.adjacentCache.containsKey(key)) {
+            return this.adjacentCache.get(key);
         }
 
         var result = new ArrayList<Integer>();
-        for (var a = -1; a < 2; a++) {
-            var newRowIndex = r + a;
-            if (newRowIndex >= 0 && newRowIndex < this.width) {
-                for (var b = -1; b < 2; b++) {
-                    var newColumnIndex = c + b;
+        var maxH = Math.min(2, this.height);
+        var maxV = Math.min(2, this.width);
+        for (var h = -1; h < maxH; h++) {
+            var newRowIndex = r + h;
+            if (newRowIndex >= 0 && newRowIndex < this.height) {
+                for (var v = -1; v < maxV; v++) {
+                    var newColumnIndex = c + v;
                     if (newColumnIndex >= 0 && newColumnIndex < this.width) {
                         if (newRowIndex == r && newColumnIndex == c) {
                             continue;
@@ -120,9 +147,30 @@ public class BoggleSolver {
             }
         }
 
-        adjacentCache.put(key, result);
+        this.adjacentCache.put(key, result);
 
         return result;
+    }
+
+    private boolean doesPrefixExist(LinkedList<Integer> queue) {
+        var prefix = getPrefix(queue);
+        var doesPrefixExist = !this.dictionaryTrie.subSet(prefix, prefix + "yyy").isEmpty(); // No English word has 3 consecutive "yyy"'s in it
+        if (doesPrefixExist && this.dictionaryTrie.contains(prefix)) {
+            this.words.add(prefix);
+        }
+
+        return doesPrefixExist;
+    }
+
+    private String getPrefix(LinkedList<Integer> queue) {
+        var stringBuilder = new StringBuilder();
+        for (var item : queue) {
+            var coordinates = toCoordinates(item);
+            var letter = this.boggleBoard.getLetter(coordinates[0], coordinates[1]);
+            stringBuilder.append(letter == 'Q' ? "QU" : letter); // 'Q' is representing the two-letter sequence "Qu"
+        }
+
+        return stringBuilder.toString();
     }
 
     private int fromCoordinates(int r, int c) {
@@ -137,15 +185,21 @@ public class BoggleSolver {
     }
 
     public static void main(String[] args) {
-        var in = new In("dictionary-yawl.txt");
+        var in = new In("dictionary-algs4.txt");
         var dictionary = in.readAllStrings();
         var solver = new BoggleSolver(dictionary);
-        var board = new BoggleBoard("board3x3.txt");
-        int score = 0;
-        for (var word : solver.getAllValidWords(board)) {
+        var board = new BoggleBoard("board4x4.txt");
+        var score = 0;
+        var validWords = new ArrayList<String>();
+        solver.getAllValidWords(board).forEach(validWords::add);
+        Collections.sort(validWords);
+        var size = 0;
+        for (var word : validWords) {
             StdOut.println(word);
             score += solver.scoreOf(word);
+            size++;
         }
         StdOut.println("Score = " + score);
+        StdOut.println("Size = " + size);
     }
 }

@@ -128,12 +128,12 @@ public class BoggleSolver {
                 if (!doesPrefixExist(path)) {
                     // When the current path corresponds to a string that is not a prefix of
                     // any word in the dictionary, there is no need to expand the path further
-                    path.remove(w);
+                    path.remove(path.size() - 1);
                     marked[w] = false;
                     continue;
                 }
                 dfsInternal(w, marked, path);
-                path.remove(w);
+                path.remove(path.size() - 1);
                 marked[w] = false;
             }
         }

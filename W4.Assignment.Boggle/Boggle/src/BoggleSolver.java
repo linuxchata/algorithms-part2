@@ -209,7 +209,7 @@ public class BoggleSolver {
     }
 
     public static void main(String[] args) {
-        var in = new In("dictionary-algs4.txt");
+        var in = new In("dictionary-yawl.txt");
         var dictionary = in.readAllStrings();
         var solver = new BoggleSolver(dictionary);
         var board = new BoggleBoard("board4x4.txt");

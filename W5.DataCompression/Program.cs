@@ -14,6 +14,10 @@ public class Program
         huffmanCompression.Compress();
         huffmanCompression.Expand();
 
+        // Lempel–Ziv–Welch Compression (LZW Compression)
+        var lempelZivWelchCompression = new LempelZivWelchCompression();
+        lempelZivWelchCompression.Compress();
+
         Console.ReadKey();
     }
 }

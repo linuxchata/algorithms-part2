@@ -13,13 +13,10 @@
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CircularSuffixArray {
-    private int n;
-    private Map<String, Integer> originalMap;
-    private String[] sortedArray;
+    private final int n;
+    private final int[] index;
 
     /*
     Circular suffix array of s
@@ -32,25 +29,39 @@ public class CircularSuffixArray {
         n = s.length();
 
         var shift = 0;
-        var intermediateArray = new char[n][n];
         var originalStringAsCharArray = s.toCharArray();
         var originalArray = new String[n];
-        originalMap = new HashMap<>(n);
         for (var i = 0; i < n; i++, shift++) {
+            var intermediateArray = new char[n];
             for (var j = 0; j < n; j++) {
                 var k = j + shift;
                 if (k >= n) {
                     k = k - n;
                 }
-                intermediateArray[i][j] = originalStringAsCharArray[k];
+                intermediateArray[j] = originalStringAsCharArray[k];
             }
-            originalArray[i] = new String(intermediateArray[i]);
-            originalMap.put(originalArray[i], i);
+            originalArray[i] = new String(intermediateArray);
         }
 
-        sortedArray = new String[n];
+        var sortedArray = new String[n];
         System.arraycopy(originalArray, 0, sortedArray, 0, originalArray.length);
         Arrays.sort(sortedArray);
+
+        index = new int[n];
+        var used = new int[n];
+        for (var i = 0; i < n; i++) {
+            var item = sortedArray[i];
+            for (var j = 0; j < n; j++) {
+                if (used[j] == 1) {
+                    continue;
+                }
+                if (item.equals(originalArray[j])) {
+                    index[i] = j;
+                    used[j] = 1;
+                    break;
+                }
+            }
+        }
     }
 
     /*
@@ -68,17 +79,16 @@ public class CircularSuffixArray {
             throw new IllegalArgumentException();
         }
 
-        var searched = sortedArray[i];
-        return originalMap.get(searched);
+        return index[i];
     }
 
     /*
     Unit testing (required)
      */
     public static void main(String[] args) {
-        var s = "ABRACADABRA!";
+        var s = "BANANA";
         var circularSuffixArray = new CircularSuffixArray(s);
-        StdOut.println("String is " + s);
+        StdOut.println("String is " + s + ". Length is " + circularSuffixArray.length());
         for (var i = 0; i < s.length(); i++) {
             StdOut.println(circularSuffixArray.index(i));
         }

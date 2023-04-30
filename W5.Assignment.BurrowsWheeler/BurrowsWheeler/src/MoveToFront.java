@@ -13,11 +13,6 @@
 import edu.princeton.cs.algs4.BinaryStdIn;
 import edu.princeton.cs.algs4.BinaryStdOut;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.sql.Array;
-import java.util.ArrayList;
-
 public class MoveToFront {
     private static final int R = 256;
     private static final int LG_R = 8;
@@ -75,11 +70,18 @@ public class MoveToFront {
     /*
     If args[0] is "-", apply move-to-front encoding
     If args[0] is "+", apply move-to-front decoding
-     */
     public static void main(String[] args) throws FileNotFoundException {
         var fileName = args[2];
-        var fileInputStream = new FileInputStream(fileName);
-        System.setIn(fileInputStream);
+        System.setIn(new FileInputStream(fileName));
+        var op = args[0];
+        if (op.equals("-")) {
+            MoveToFront.encode();
+        } else if (op.equals("+")) {
+            MoveToFront.decode();
+        }
+    }
+     */
+    public static void main(String[] args) {
         var op = args[0];
         if (op.equals("-")) {
             MoveToFront.encode();

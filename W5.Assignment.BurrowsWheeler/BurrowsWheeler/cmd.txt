@@ -1,0 +1,2 @@
+- < C:\src\algorithms-part2\W5.Assignment.BurrowsWheeler\BurrowsWheeler\abra.txt
++ < C:\src\algorithms-part2\W5.Assignment.BurrowsWheeler\BurrowsWheeler\abra.txt.mtf

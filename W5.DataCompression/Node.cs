@@ -24,4 +24,9 @@ public sealed class Node : IComparable<Node>
     {
         return Frequency - that.Frequency;
     }
+
+    public override string ToString()
+    {
+        return $"Char [{Char}]. Frequency {Frequency}";
+    }
 }

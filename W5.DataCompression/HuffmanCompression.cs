@@ -38,7 +38,8 @@ public sealed class HuffmanCompression
         var content = binaryReader.ReadChars(contentLength);
         for (var i = 0; i < contentLength; i++)
         {
-            var code = codeTable[content[i]];
+            var value = content[i];
+            var code = codeTable[value];
             for (var j = 0; j < code.Length; j++)
             {
                 binaryWriter.Write(code[j] == '1' ? true : false);

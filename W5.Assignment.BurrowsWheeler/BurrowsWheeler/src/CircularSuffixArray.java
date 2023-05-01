@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       30/04/2023
- *  Last updated:  30/04/2023
+ *  Last updated:  31/04/2023
  *
  *  Compilation:   javac CircularSuffixArray.java
  *  Execution:     java CircularSuffixArray
@@ -10,14 +10,12 @@
  *
  *----------------------------------------------------------------*/
 
-import edu.princeton.cs.algs4.MSD;
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.Arrays;
 
 public class CircularSuffixArray {
-    private final int n;
-    private final int[] index;
+    private final CircularSuffix[] circularSuffixes;
 
     /*
     Circular suffix array of s
@@ -27,65 +25,79 @@ public class CircularSuffixArray {
             throw new IllegalArgumentException();
         }
 
-        n = s.length();
+        var n = s.length();
 
-        var shift = 0;
-        var originalStringAsCharArray = s.toCharArray();
-        var originalArray = new String[n];
-        for (var i = 0; i < n; i++, shift++) {
-            var charArray = new char[n];
-            var shiftIndex = n - shift;
-            System.arraycopy(originalStringAsCharArray, shift, charArray, 0, shiftIndex);
-            if (shiftIndex < n) {
-                System.arraycopy(originalStringAsCharArray, 0, charArray, shiftIndex, shift);
-            }
-            originalArray[i] = new String(charArray);
-        }
-
-        var sortedArray = new String[n];
-        System.arraycopy(originalArray, 0, sortedArray, 0, originalArray.length);
-        Arrays.sort(sortedArray);
-
-        index = new int[n];
-        var used = new int[n];
+        this.circularSuffixes = new CircularSuffix[n];
         for (var i = 0; i < n; i++) {
-            var item = sortedArray[i];
-            for (var j = 0; j < n; j++) {
-                if (used[j] == 1) {
-                    continue;
-                }
-                if (item.equals(originalArray[j])) {
-                    index[i] = j;
-                    used[j] = 1;
-                    break;
-                }
-            }
+            this.circularSuffixes[i] = new CircularSuffix(s, i);
         }
+
+        Arrays.sort(this.circularSuffixes);
     }
 
     /*
     Length of s
      */
     public int length() {
-        return n;
+        return circularSuffixes.length;
     }
 
     /*
     Returns index of ith sorted suffix
      */
     public int index(int i) {
-        if (i < 0 || i >= n) {
+        if (i < 0 || i >= length()) {
             throw new IllegalArgumentException();
         }
 
-        return index[i];
+        return circularSuffixes[i].getIndex();
+    }
+
+    private class CircularSuffix implements Comparable<CircularSuffix> {
+        private final String s;
+        private final int index;
+
+        public CircularSuffix(String s, int index) {
+            this.s = s;
+            this.index = index;
+        }
+
+        public int getIndex() {
+            return this.index;
+        }
+
+        public char charAt(int i) {
+            var shiftedIndex = ((i + this.index) % s.length());
+            return this.s.charAt(shiftedIndex);
+        }
+
+        @Override
+        public int compareTo(CircularSuffix that) {
+            if (this == that) {
+                return 0;
+            }
+
+            var n = this.s.length();
+
+            for (var i = 0; i < n; i++) {
+                var c1 = this.charAt(i);
+                var c2 = that.charAt(i);
+                if (c1 < c2) {
+                    return -1;
+                } else if (c1 > c2) {
+                    return 1;
+                }
+            }
+
+            return 0;
+        }
     }
 
     /*
     Unit testing (required)
      */
     public static void main(String[] args) {
-        var s = "ABRACADABRA!";
+        var s = "************";
         var circularSuffixArray = new CircularSuffixArray(s);
         StdOut.println("String is " + s + ". Length is " + circularSuffixArray.length());
         for (var i = 0; i < s.length(); i++) {

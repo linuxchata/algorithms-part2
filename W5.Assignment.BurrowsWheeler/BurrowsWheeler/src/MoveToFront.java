@@ -70,16 +70,6 @@ public class MoveToFront {
     /*
     If args[0] is "-", apply move-to-front encoding
     If args[0] is "+", apply move-to-front decoding
-    public static void main(String[] args) throws FileNotFoundException {
-        var fileName = args[2];
-        System.setIn(new FileInputStream(fileName));
-        var op = args[0];
-        if (op.equals("-")) {
-            MoveToFront.encode();
-        } else if (op.equals("+")) {
-            MoveToFront.decode();
-        }
-    }
      */
     public static void main(String[] args) {
         var op = args[0];

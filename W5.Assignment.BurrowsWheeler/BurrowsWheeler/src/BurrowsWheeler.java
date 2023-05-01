@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------
  *  Author:        Pylyp Lebediev
  *  Written:       30/04/2023
- *  Last updated:  30/04/2023
+ *  Last updated:  31/04/2023
  *
  *  Compilation:   javac BurrowsWheeler.java
  *  Execution:     java BurrowsWheeler

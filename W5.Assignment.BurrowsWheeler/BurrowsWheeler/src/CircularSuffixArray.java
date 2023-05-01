@@ -10,6 +10,7 @@
  *
  *----------------------------------------------------------------*/
 
+import edu.princeton.cs.algs4.MSD;
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.Arrays;
@@ -32,15 +33,13 @@ public class CircularSuffixArray {
         var originalStringAsCharArray = s.toCharArray();
         var originalArray = new String[n];
         for (var i = 0; i < n; i++, shift++) {
-            var intermediateArray = new char[n];
-            for (var j = 0; j < n; j++) {
-                var k = j + shift;
-                if (k >= n) {
-                    k = k - n;
-                }
-                intermediateArray[j] = originalStringAsCharArray[k];
+            var charArray = new char[n];
+            var shiftIndex = n - shift;
+            System.arraycopy(originalStringAsCharArray, shift, charArray, 0, shiftIndex);
+            if (shiftIndex < n) {
+                System.arraycopy(originalStringAsCharArray, 0, charArray, shiftIndex, shift);
             }
-            originalArray[i] = new String(intermediateArray);
+            originalArray[i] = new String(charArray);
         }
 
         var sortedArray = new String[n];
@@ -86,7 +85,7 @@ public class CircularSuffixArray {
     Unit testing (required)
      */
     public static void main(String[] args) {
-        var s = "BANANA";
+        var s = "ABRACADABRA!";
         var circularSuffixArray = new CircularSuffixArray(s);
         StdOut.println("String is " + s + ". Length is " + circularSuffixArray.length());
         for (var i = 0; i < s.length(); i++) {

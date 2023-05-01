@@ -13,8 +13,6 @@
 import edu.princeton.cs.algs4.BinaryStdIn;
 import edu.princeton.cs.algs4.BinaryStdOut;
 
-import java.util.Arrays;
-
 public class BurrowsWheeler {
     private static final int R = 256;
 
@@ -29,13 +27,11 @@ public class BurrowsWheeler {
 
         var circularSuffixArray = new CircularSuffixArray(input);
         var output = new char[n];
-        int i;
-        for (i = 0; i < n; i++) {
+        for (var i = 0; i < n; i++) {
             // Get last column character
             var index = circularSuffixArray.index(i);
-            var charIndex = (index - 1) < 0 ? n - 1 : (index - 1);
-            var lastColumnChar = input.charAt(charIndex);
-            output[i] = lastColumnChar;
+            var lastColumnCharIndex = (index - 1) < 0 ? n - 1 : (index - 1);
+            output[i] = input.charAt(lastColumnCharIndex); // Last column character
 
             // Find first
             if (index == 0) {
@@ -58,8 +54,7 @@ public class BurrowsWheeler {
         var t = BinaryStdIn.readString();
 
         var n = t.length();
-        var firstColumn = t.toCharArray();
-        Arrays.sort(firstColumn);
+        var firstColumn = new char[n]; // First column of sorted suffixes array
 
         // Get next array
         var next = getNext(firstColumn, t.toCharArray(), n);
@@ -75,45 +70,26 @@ public class BurrowsWheeler {
     }
 
     private static int[] getNext(char[] firstColumn, char[] t, int n) {
-        var count = new int[R];
+        // Key-indexed counting algorithm with modification to get next array
+        // Returns first column of sorted suffixes array (sorted t array)
+        var count = new int[R + 1];
         var next = new int[n];
 
         for (var i = 0; i < n; i++) {
-            count[firstColumn[i]]++;
+            count[t[i] + 1]++;
         }
 
-        for (var i = 0; i < R; i++) {
-            var value = (char) i;
-            for (var c = 0; c < count[i]; c++) {
-                var nextIndex = getValueIndexFromArray(firstColumn, value) + c;
-                var nextValue = getValueIndexFromArray(t, value, c + 1);
-                next[nextIndex] = nextValue;
-            }
+        for (var r = 0; r < R; r++) {
+            count[r + 1] += count[r];
+        }
+
+        for (var i = 0; i < n; i++) {
+            var d = count[t[i]]++;
+            next[d] = i;
+            firstColumn[d] = t[i];
         }
 
         return next;
-    }
-
-    private static int getValueIndexFromArray(char[] a, char value) {
-        for (var i = 0; i < a.length; i++) {
-            if (a[i] == value) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private static int getValueIndexFromArray(char[] a, char value, int currentCount) {
-        var c = 0;
-        for (var i = 0; i < a.length; i++) {
-            if (a[i] == value) {
-                c++;
-                if (currentCount == c) {
-                    return i;
-                }
-            }
-        }
-        return -1;
     }
 
     /*
